@@ -2,6 +2,7 @@ package com.wchamara.spring6webapp.domain;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public class Author {
      * This relationship is managed by the Book entity.
      */
     @ManyToMany(mappedBy = "authors")
-    private Set<Book> books;
+    private Set<Book> books = new HashSet<>();
 
     /**
      * Gets the set of books associated with the author.

@@ -631,7 +631,144 @@ public class Author {
 }
 ```
 ## 010 Spring Data Repositories
+```java
+/**
+ * This interface represents a repository for managing Author entities.
+ * It extends the CrudRepository interface, providing basic CRUD operations
+ * for the Author entity.
+ *
+ * @param <Author> the type of entity being managed by the repository
+ * @param <Long>   the type of the entity's ID
+ */
+package com.wchamara.spring6webapp.repository;
+     
+import com.wchamara.spring6webapp.domain.Author;
+import org.springframework.data.repository.CrudRepository;
+
+public interface AuthorRepository extends CrudRepository<Author, Long> {
+}
+```
+```java
+/**
+ * This interface represents a repository for managing books in a Spring Boot web application.
+ * It extends the `CrudRepository` interface, which provides basic CRUD operations for the `Book` entity.
+ *
+ * @param <Book> The type of entity being managed by the repository.
+ * @param <Long> The type of the primary key of the entity.
+ */
+package com.wchamara.spring6webapp.repository;
+
+import com.wchamara.spring6webapp.domain.Book;
+import org.springframework.data.repository.CrudRepository;
+
+public interface BookRepository extends CrudRepository<Book, Long> {
+}
+
+```
 ## 011 Initializing Data with Spring
+let's create a bootstrap class that will initialize some data in the database when the application starts up. This class will implement the `CommandLineRunner` interface, which provides a callback method that will be executed after the application context is loaded and before the application is started.
+
+```java
+package com.wchamara.spring6webapp.bootstrap;
+
+import com.wchamara.spring6webapp.domain.Author;
+import com.wchamara.spring6webapp.domain.Book;
+import com.wchamara.spring6webapp.repository.AuthorRepository;
+import com.wchamara.spring6webapp.repository.BookRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BootstrapData implements CommandLineRunner {
+
+    private final AuthorRepository authorRepository;
+    private final BookRepository bookRepository;
+
+    public BootstrapData(AuthorRepository authorRepository, BookRepository bookRepository) {
+        this.authorRepository = authorRepository;
+        this.bookRepository = bookRepository;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        Author eric = new Author();
+        eric.setFirstName("Eric");
+        eric.setLastName("Evans");
+
+        Author rod = new Author();
+        rod.setFirstName("Rod");
+        rod.setLastName("Johnson");
+
+        Book ddd = new Book();
+        ddd.setTitle("Domain Driven Design");
+        ddd.setIsbn("1234");
+
+        Book noEJB = new Book();
+        noEJB.setTitle("J2EE Development without EJB");
+        noEJB.setIsbn("2345");
+
+        System.out.println("Started in Bootstrap");
+
+        Author ericSaved = authorRepository.save(eric);
+        Author rodSaved = authorRepository.save(rod);
+
+        Book dddSaved = bookRepository.save(ddd);
+        Book noEJBSaved = bookRepository.save(noEJB);
+
+        ericSaved.getBooks().add(noEJBSaved);
+        rodSaved.getBooks().add(dddSaved);
+
+        authorRepository.save(ericSaved);
+        authorRepository.save(rodSaved);
+
+        System.out.println("Authors: " + authorRepository.count());
+        System.out.println("Books: " + bookRepository.count());
+
+
+    }
+
+}
+```
+
+```java
+    /**
+     * The set of books associated with the author.
+     * This relationship is managed by the Book entity.
+     */
+    @ManyToMany(mappedBy = "authors")
+    private Set<Book> books = new HashSet<>();
+```
+
+```java
+    @ManyToMany
+    @JoinTable(name = "author_book", joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id"))
+    private Set<Author> authors = new HashSet<>();
+
+```
+
+```java
+package com.wchamara.spring6webapp.repository;
+
+import com.wchamara.spring6webapp.domain.Author;
+import org.springframework.data.repository.CrudRepository;
+
+public interface AuthorRepository extends CrudRepository<Author, Long> {
+}
+
+```
+```java
+package com.wchamara.spring6webapp.repository;
+
+import com.wchamara.spring6webapp.domain.Book;
+import org.springframework.data.repository.CrudRepository;
+
+public interface BookRepository extends CrudRepository<Book, Long> {
+}
+
+```
+
 ## 012 Publisher Relationships
 ## 013 Introduction to H2 Database Console
 ## 014 Introduction to Spring MVC
