@@ -255,6 +255,24 @@ public class Author {
 }
 ```
 ```java
+
+The selected code snippet is part of the `Author` class in a Spring Boot application using JPA (Java Persistence API) for ORM (Object-Relational Mapping). The code defines a many-to-many relationship between the `Author` and `Book` entities.
+
+The `@ManyToMany` annotation is used to specify that the `Author` entity has a many-to-many relationship with the `Book` entity. This means that an author can be associated with multiple books, and a book can be associated with multiple authors. The `mappedBy` attribute in the `@ManyToMany` annotation indicates that the `books` field in the `Author` class is the inverse side of the relationship, and the `authors` field in the `Book` class owns the relationship.
+
+```java
+@ManyToMany(mappedBy = "authors")
+```
+
+The `private Set<Book> books;` line declares a collection of `Book` objects associated with the `Author`. The `Set` collection type is used to ensure that each book is unique within the collection.
+
+```java
+private Set<Book> books;
+```
+
+Together, these lines of code establish a bidirectional many-to-many relationship between the `Author` and `Book` entities, allowing the application to navigate from an author to their books and vice versa.
+
+
 ```java
 package com.wchamara.spring6webapp.domain;
 
