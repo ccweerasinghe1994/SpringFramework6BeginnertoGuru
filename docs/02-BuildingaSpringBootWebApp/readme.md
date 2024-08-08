@@ -89,7 +89,81 @@ go to start.spring.io
 </project>
 ```
 ## 005 Open Project in IntelliJ
+
+[maven folder structure](https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html)
+
+![alt text](image-10.png)
+![alt text](image-11.png)
 ## 006 Using JPA Entities
+```java
+package com.wchamara.spring6webapp.domain;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+/**
+ * Represents an author entity.
+ * This class is mapped to a database table using JPA annotations.
+ */
+@Entity
+public class Author {
+
+    /**
+     * The unique identifier for the author.
+     * This value is automatically generated.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
+    /**
+     * The first name of the author.
+     */
+    private String firstName;
+
+    /**
+     * The last name of the author.
+     */
+    private String lastName;
+
+}
+```
+```java
+package com.wchamara.spring6webapp.domain;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+/**
+ * Represents a book entity.
+ * This class is mapped to a database table using JPA annotations.
+ */
+@Entity
+public class Book {
+
+    /**
+     * The unique identifier for the book.
+     * This value is automatically generated.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
+    /**
+     * The title of the book.
+     */
+    private String title;
+
+    /**
+     * The ISBN of the book.
+     */
+    private String isbn;
+}
+```
 ## 007 JPA Relationships
 ## 008 Code Examples in GitHub
 ## 009 Equality in Hibernate
