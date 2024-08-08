@@ -165,7 +165,15 @@ public class Book {
 }
 ```
 ## 007 JPA Relationships
-```java
+The provided code snippet is a part of a Java class, likely representing a `Book` entity in a JPA (Java Persistence API) context. This snippet defines a many-to-many relationship between the `Book` entity and another entity, [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition").
+
+The `@ManyToMany` annotation indicates that each `Book` can be associated with multiple [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entities, and each [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") can be associated with multiple `Book` entities. This type of relationship is common in scenarios where entities have a bidirectional relationship, such as books and authors, where a book can have multiple authors and an author can write multiple books.
+
+The `@JoinTable` annotation specifies the details of the join table that will be used to manage this many-to-many relationship in the database. The [`name`](command:_github.copilot.openSymbolFromReferences?%5B%22name%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A23%2C%22character%22%3A15%7D%7D%5D%5D "Go to definition") attribute of the `@JoinTable` annotation defines the name of the join table, which in this case is [`author_book`](command:_github.copilot.openSymbolFromReferences?%5B%22author_book%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A23%2C%22character%22%3A23%7D%7D%5D%5D "Go to definition"). This table will contain the foreign keys that link the `Book` and [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entities.
+
+The [`joinColumns`](command:_github.copilot.openSymbolFromReferences?%5B%22joinColumns%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A23%2C%22character%22%3A37%7D%7D%5D%5D "Go to definition") attribute specifies the foreign key column in the join table that refers to the `Book` entity. Here, it is defined as [`book_id`](command:_github.copilot.openSymbolFromReferences?%5B%22book_id%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A23%2C%22character%22%3A71%7D%7D%5D%5D "Go to definition"). The [`inverseJoinColumns`](command:_github.copilot.openSymbolFromReferences?%5B%22inverseJoinColumns%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A24%2C%22character%22%3A12%7D%7D%5D%5D "Go to definition") attribute specifies the foreign key column in the join table that refers to the [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entity, defined as [`author_id`](command:_github.copilot.openSymbolFromReferences?%5B%22author_id%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A24%2C%22character%22%3A53%7D%7D%5D%5D "Go to definition"). These columns will store the IDs of the `Book` and [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entities, respectively, establishing the many-to-many relationship between them.
+
+Finally, the [`private Set<Author> authors;`](command:_github.copilot.openSymbolFromReferences?%5B%22private%20Set%3CAuthor%3E%20authors%3B%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A12%7D%7D%5D%5D "Go to definition") line declares a collection of [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entities associated with the `Book` entity. The use of [`Set`](command:_github.copilot.openSymbolFromReferences?%5B%22Set%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A12%7D%7D%5D%5D "Go to definition") ensures that each [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") is unique within the collection, preventing duplicate entries. This collection will be populated with the [`Author`](command:_github.copilot.openSymbolFromReferences?%5B%22Author%22%2C%5B%7B%22uri%22%3A%7B%22%24mid%22%3A1%2C%22fsPath%22%3A%22c%3A%5C%5CUsers%5C%5Cchama%5C%5COneDrive%5C%5CDocuments%5C%5CGitHub%5C%5CSpringFramework6BeginnertoGuru%5C%5Cspring-6-webapp%5C%5Csrc%5C%5Cmain%5C%5Cjava%5C%5Ccom%5C%5Cwchamara%5C%5Cspring6webapp%5C%5Cdomain%5C%5CBook.java%22%2C%22_sep%22%3A1%2C%22external%22%3A%22file%3A%2F%2F%2Fc%253A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22path%22%3A%22%2FC%3A%2FUsers%2Fchama%2FOneDrive%2FDocuments%2FGitHub%2FSpringFramework6BeginnertoGuru%2Fspring-6-webapp%2Fsrc%2Fmain%2Fjava%2Fcom%2Fwchamara%2Fspring6webapp%2Fdomain%2FBook.java%22%2C%22scheme%22%3A%22file%22%7D%2C%22pos%22%3A%7B%22line%22%3A25%2C%22character%22%3A16%7D%7D%5D%5D "Go to definition") entities that are linked to the `Book` through the join table.
 ```java
 package com.wchamara.spring6webapp.domain;
 
@@ -366,6 +374,262 @@ public class Book {
 ```
 ## 008 Code Examples in GitHub
 ## 009 Equality in Hibernate
+```java
+package com.wchamara.spring6webapp.domain;
+
+import jakarta.persistence.*;
+
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * Represents a book entity.
+ * This class is mapped to a database table using JPA annotations.
+ */
+@Entity
+public class Book {
+
+    /**
+     * The unique identifier for the book.
+     * This value is automatically generated.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
+    /**
+     * The title of the book.
+     */
+    private String title;
+
+    /**
+     * The ISBN of the book.
+     */
+    private String isbn;
+
+    /**
+     * The set of authors associated with the book.
+     * This relationship is managed by the Author entity.
+     */
+    @ManyToMany
+    @JoinTable(name = "author_book", joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id"))
+    private Set<Author> authors;
+
+    /**
+     * Gets the unique identifier for the book.
+     * @return the unique identifier for the book.
+     */
+    public long getId() {
+        return id;
+    }
+
+    /**
+     * Sets the unique identifier for the book.
+     * @param id the unique identifier for the book.
+     */
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    /**
+     * Gets the title of the book.
+     * @return the title of the book.
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Sets the title of the book.
+     * @param title the title of the book.
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * Gets the ISBN of the book.
+     * @return the ISBN of the book.
+     */
+    public String getIsbn() {
+        return isbn;
+    }
+
+    /**
+     * Sets the ISBN of the book.
+     * @param isbn the ISBN of the book.
+     */
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    /**
+     * Gets the set of authors associated with the book.
+     * @return the set of authors associated with the book.
+     */
+    public Set<Author> getAuthors() {
+        return authors;
+    }
+
+    /**
+     * Sets the set of authors associated with the book.
+     * @param authors the set of authors associated with the book.
+     */
+    public void setAuthors(Set<Author> authors) {
+        this.authors = authors;
+    }
+
+    /**
+     * Checks if this book is equal to another object.
+     * @param o the object to compare with.
+     * @return true if this book is equal to the other object, false otherwise.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Book book = (Book) o;
+        return id == book.id && Objects.equals(title, book.title) && Objects.equals(isbn, book.isbn) && Objects.equals(authors, book.authors);
+    }
+
+    /**
+     * Generates a hash code for this book.
+     * @return the hash code for this book.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title, isbn, authors);
+    }
+}
+```
+```java
+package com.wchamara.spring6webapp.domain;
+
+import jakarta.persistence.*;
+
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * Represents an author entity.
+ * This class is mapped to a database table using JPA annotations.
+ */
+@Entity
+public class Author {
+
+    /**
+     * The unique identifier for the author.
+     * This value is automatically generated.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
+    /**
+     * The first name of the author.
+     */
+    private String firstName;
+
+    /**
+     * The last name of the author.
+     */
+    private String lastName;
+
+    /**
+     * The set of books associated with the author.
+     * This relationship is managed by the Book entity.
+     */
+    @ManyToMany(mappedBy = "authors")
+    private Set<Book> books;
+
+    /**
+     * Gets the set of books associated with the author.
+     * @return the set of books associated with the author.
+     */
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    /**
+     * Sets the set of books associated with the author.
+     * @param books the set of books associated with the author.
+     */
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+
+    /**
+     * Gets the unique identifier for the author.
+     * @return the unique identifier for the author.
+     */
+    public long getId() {
+        return id;
+    }
+
+    /**
+     * Sets the unique identifier for the author.
+     * @param id the unique identifier for the author.
+     */
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    /**
+     * Gets the first name of the author.
+     * @return the first name of the author.
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * Sets the first name of the author.
+     * @param firstName the first name of the author.
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * Gets the last name of the author.
+     * @return the last name of the author.
+     */
+    public String getLastName() {
+        return lastName;
+    }
+
+    /**
+     * Sets the last name of the author.
+     * @param lastName the last name of the author.
+     */
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    /**
+     * Checks if this author is equal to another object.
+     * @param o the object to compare with.
+     * @return true if this author is equal to the other object, false otherwise.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Author author = (Author) o;
+        return id == author.id && Objects.equals(firstName, author.firstName) && Objects.equals(lastName, author.lastName) && Objects.equals(books, author.books);
+    }
+
+    /**
+     * Generates a hash code for this author.
+     * @return the hash code for this author.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, books);
+    }
+}
+```
 ## 010 Spring Data Repositories
 ## 011 Initializing Data with Spring
 ## 012 Publisher Relationships
