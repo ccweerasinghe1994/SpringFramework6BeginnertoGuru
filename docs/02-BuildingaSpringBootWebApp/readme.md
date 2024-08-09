@@ -1136,6 +1136,17 @@ public class BootstrapData implements CommandLineRunner {
 ![alt text](image-15.png)
 
 ## 015 Create Service Layer
+
+The selected code defines the `BookService` interface in a Spring Boot application. This interface is part of the service layer, which is responsible for encapsulating the business logic of the application.
+
+The `BookService` interface declares a single method, `findAll()`, which returns an `Iterable<Book>`. This method is intended to retrieve all `Book` entities from the underlying data store. The use of `Iterable<Book>` allows for flexibility in how the collection of books is handled, making it compatible with various collection types.
+
+```java
+Iterable<Book> findAll();
+```
+
+By defining this method in an interface, the application can have multiple implementations of `BookService`, each potentially using different data sources or strategies for retrieving books. This promotes a clean separation of concerns and makes the codebase more modular and testable.
+
 ```java
 package com.wchamara.spring6webapp.service;
 
@@ -1148,6 +1159,26 @@ public interface BookService {
 
 ```
 
+The selected code defines the `BookServiceImpl` class, which is an implementation of the `BookService` interface in a Spring Boot application. This class is annotated with `@Service`, indicating that it is a service component in the Spring context.
+
+The `BookServiceImpl` class has a dependency on `BookRepository`, which is injected via the constructor. This is evident from the constructor definition:
+
+```java
+public BookServiceImpl(BookRepository bookRepository) {
+    this.bookRepository = bookRepository;
+}
+```
+
+The `@Override` annotation on the `findAll` method indicates that this method is an implementation of the `findAll` method declared in the `BookService` interface. The `findAll` method retrieves all `Book` entities from the `BookRepository` and returns them as an `Iterable<Book>`:
+
+```java
+@Override
+public Iterable<Book> findAll() {
+    return bookRepository.findAll();
+}
+```
+
+By implementing the `BookService` interface, `BookServiceImpl` provides a concrete way to interact with the `BookRepository` to fetch all books, encapsulating the data access logic within the service layer. This promotes a clean separation of concerns and makes the codebase more modular and testable.
 ```java
 package com.wchamara.spring6webapp.service;
 
@@ -1171,5 +1202,56 @@ public class BookServiceImpl implements BookService {
 }
 ```
 ## 016 Configuring Spring Controllers
+```java
+package com.wchamara.spring6webapp.controller;
+
+import com.wchamara.spring6webapp.service.BookService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class BookController {
+
+    BookService bookService;
+
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
+    @RequestMapping("/books")
+    public String getBooks(Model model) {
+        model.addAttribute("books", bookService.findAll());
+        return "books";
+    }
+    
+}
+```
+The selected code snippet is part of a Spring Boot application and defines a `BookController` class. This class is annotated with `@Controller`, indicating that it is a Spring MVC controller that handles web requests.
+
+The `BookController` class has a dependency on `BookService`, which is injected via the constructor. This is evident from the constructor definition:
+
+```java
+public BookController(BookService bookService) {
+    this.bookService = bookService;
+}
+```
+
+The `@RequestMapping("/books")` annotation on the `getBooks` method maps HTTP requests to the `/books` URL to this method. When a request is made to `/books`, the `getBooks` method is invoked.
+
+Inside the `getBooks` method, a `Model` object is used to pass data to the view. The method calls `bookService.findAll()` to retrieve a list of books and adds this list to the model with the attribute name "books":
+
+```java
+model.addAttribute("books", bookService.findAll());
+```
+
+Finally, the method returns the name of the view to be rendered, which is "books":
+
+```java
+return "books";
+```
+
+This setup allows the application to handle requests to `/books`, retrieve a list of books from the service layer, and pass this data to the view for rendering.
+
 ## 017 Thymeleaf Templates
 ## 018 Project Review
