@@ -1136,6 +1136,40 @@ public class BootstrapData implements CommandLineRunner {
 ![alt text](image-15.png)
 
 ## 015 Create Service Layer
+```java
+package com.wchamara.spring6webapp.service;
+
+import com.wchamara.spring6webapp.domain.Book;
+
+public interface BookService {
+
+    Iterable<Book> findAll();
+}
+
+```
+
+```java
+package com.wchamara.spring6webapp.service;
+
+import com.wchamara.spring6webapp.domain.Book;
+import com.wchamara.spring6webapp.repository.BookRepository;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    private final BookRepository bookRepository;
+
+    public BookServiceImpl(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
+    @Override
+    public Iterable<Book> findAll() {
+        return bookRepository.findAll();
+    }
+}
+```
 ## 016 Configuring Spring Controllers
 ## 017 Thymeleaf Templates
 ## 018 Project Review
