@@ -511,6 +511,126 @@ public class PrimaryGreetingServiceImpl implements GreetingService {
 }
 ```
 ## 010 Using Qualifiers
+```java
+package com.wchamara.spring6di.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class GreetingServicePropertyInject implements GreetingService {
+    /**
+     * @return
+     */
+    @Override
+    public String sayGreeting() {
+        return "Hello From Property Injected Greeting Service";
+    }
+}
+
+``
+```java
+package com.wchamara.spring6di.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class GreetingServiceSetterInjectImpl implements GreetingService {
+    /**
+     * @return
+     */
+    @Override
+    public String sayGreeting() {
+        return "Hello From Setter Injected Greeting Service";
+    }
+}
+
+``
+```java
+package com.wchamara.spring6di.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class GreetingServiceConstructorInjectImpl implements GreetingService {
+    /**
+     * @return
+     */
+    @Override
+    public String sayGreeting() {
+        return "Hello From Constructor Injected Greeting Service";
+    }
+}
+
+``
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class PropertyInjectedController {
+
+    @Autowired
+    @Qualifier("greetingServicePropertyInject")
+    public GreetingService greetingService;
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+
+}
+
+``
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class SetterInjectedController {
+
+    private GreetingService greetingService;
+
+    @Autowired
+    public void setGreetingService(@Qualifier("greetingServiceSetterInjectImpl") GreetingService greetingService) {
+        this.greetingService = greetingService;
+    }
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+}
+
+``
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class ConstructorInjectedController {
+
+    GreetingService greetingService;
+
+    public ConstructorInjectedController(@Qualifier("greetingServiceConstructorInjectImpl") GreetingService greetingService) {
+        this.greetingService = greetingService;
+    }
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+
+}
+
+``
 
 
 ## 011 Spring Profiles
