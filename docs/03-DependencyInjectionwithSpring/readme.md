@@ -634,7 +634,104 @@ public class ConstructorInjectedController {
 
 
 ## 011 Spring Profiles
+```java
+package com.wchamara.spring6di.service.i18n;
 
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+@Profile({"EN", "default"})
+@Service("i18nService")
+public class EnglishGreetingService implements GreetingService {
+    @Override
+    public String sayGreeting() {
+        return "Hello Every One From English Greeting Service";
+    }
+}
+```
+```java
+package com.wchamara.spring6di.service.i18n;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+@Profile("DE")
+@Service("i18nService")
+public class GermanGreetingService implements GreetingService {
+    /**
+     * @return
+     */
+    @Override
+    public String sayGreeting() {
+        return "Hallo Jeder von Deutscher Grußdienst";
+    }
+}
+
+```
+```java
+package com.wchamara.spring6di.service.i18n;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+@Profile({"EN", "default"})
+@Service("i18nService")
+public class EnglishGreetingService implements GreetingService {
+    @Override
+    public String sayGreeting() {
+        return "Hello Every One From English Greeting Service";
+    }
+}
+
+```
+```java
+package com.wchamara.spring6di.service.i18n;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+@Profile("DE")
+@Service("i18nService")
+public class GermanGreetingService implements GreetingService {
+    /**
+     * @return
+     */
+    @Override
+    public String sayGreeting() {
+        return "Hallo Jeder von Deutscher Grußdienst";
+    }
+}
+
+```
+```java
+package com.wchamara.spring6di.service.i18n;
+
+import com.wchamara.spring6di.controller.MyI18nController;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("EN")
+@SpringBootTest
+class GermanGreetingServiceTest {
+
+    @Autowired
+    MyI18nController myI18nController;
+
+    @Test
+    void getGreeting() {
+        System.out.println(myI18nController.sayHello());
+    }
+}
+```
+```java
+
+```
 
 ## 012 Default Profile
 
