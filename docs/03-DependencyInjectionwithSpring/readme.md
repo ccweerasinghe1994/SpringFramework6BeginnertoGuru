@@ -349,6 +349,145 @@ class ConstructorInjectedControllerTest {
 ```
 
 ## 008 Dependency Injection using Spring Framework
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class ConstructorInjectedController {
+
+    GreetingService greetingService;
+
+    public ConstructorInjectedController(GreetingService greetingService) {
+        this.greetingService = greetingService;
+    }
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+
+}
+
+```
+```java
+package com.wchamara.spring6di.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class GreetingServiceImpl implements GreetingService {
+
+    @Override
+    public String sayGreeting() {
+        return "Hello Every One From Base Greeting Service";
+    }
+}
+
+```
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class PropertyInjectedController {
+    
+    @Autowired
+    public GreetingService greetingService;
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+
+}
+
+```
+```java
+package com.wchamara.spring6di.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class PropertyInjectedControllerTest {
+
+    @Autowired
+    PropertyInjectedController controller;
+
+    @Test
+    void sayGreeting() {
+        System.out.println(controller.sayGreeting());
+    }
+}
+```
+```java
+package com.wchamara.spring6di.controller;
+
+import com.wchamara.spring6di.service.GreetingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class SetterInjectedController {
+
+    private GreetingService greetingService;
+
+    @Autowired
+    public void setGreetingService(GreetingService greetingService) {
+        this.greetingService = greetingService;
+    }
+
+    public String sayGreeting() {
+        return greetingService.sayGreeting();
+    }
+}
+
+```
+```java
+package com.wchamara.spring6di.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class SetterInjectedControllerTest {
+
+    @Autowired
+    SetterInjectedController controller;
+
+
+    @Test
+    void setterControllerTest() {
+        System.out.println(controller.sayGreeting());
+    }
+
+}
+```
+```java
+package com.wchamara.spring6di.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ConstructorInjectedControllerTest {
+
+    @Autowired
+    ConstructorInjectedController controller;
+
+    @Test
+    void sayGreeting() {
+        System.out.println(controller.sayGreeting());
+    }
+}
+```
 
 
 ## 009 Primary Beans
