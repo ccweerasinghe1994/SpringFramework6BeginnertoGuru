@@ -1254,4 +1254,38 @@ return "books";
 This setup allows the application to handle requests to `/books`, retrieve a list of books from the service layer, and pass this data to the view for rendering.
 
 ## 017 Thymeleaf Templates
-## 018 Project Review
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+```html
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Document</title>
+</head>
+<body>
+<h1>Book List</h1>
+<table border="1">
+    <tr>
+        <th>Id</th>
+        <th>Title</th>
+        <th>isbn</th>
+        <th>publisher</th>
+    </tr>
+    <tr th:each="book : ${books}">
+        <td th:text="${book.id}"></td>
+        <td th:text="${book.title}"></td>
+        <td th:text="${book.isbn}"></td>
+        <td th:text="${book.publisher.publisherName}"></td>
+    </tr>
+</table>
+</body>
+</html>
+```
+
+![alt text](image-16.png)
