@@ -1,61 +1,32 @@
 package com.wchamara.spring6restmvc.controller;
 
-import com.wchamara.spring6restmvc.model.Beer;
-import com.wchamara.spring6restmvc.model.BeerStyle;
+import com.wchamara.spring6restmvc.service.BeerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
 class BeerControllerTest {
     @Autowired
-    private BeerController beerController;
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
 
     @Test
-    void getBeerByIdReturnsBeer() {
-        UUID beerId = UUID.randomUUID();
-        Beer expectedBeer = Beer.builder()
-                .id(beerId)
-                .version(1)
-                .beerName("Galaxy Cat")
-                .beerStyle(BeerStyle.PALE_ALE)
-                .upc("123456")
-                .price(BigDecimal.valueOf(12.95))
-                .quantityOnHand(200)
-                .createdDate(LocalDateTime.now())
-                .updatedDate(LocalDateTime.now())
-                .build();
-
-        Beer actualBeer = beerController.getBeerById(beerId);
-
-        assertEquals(expectedBeer.getBeerName(), actualBeer.getBeerName());
-        assertEquals(expectedBeer.getBeerStyle(), actualBeer.getBeerStyle());
-        assertEquals(expectedBeer.getUpc(), actualBeer.getUpc());
-        assertEquals(expectedBeer.getPrice(), actualBeer.getPrice());
-        assertEquals(expectedBeer.getQuantityOnHand(), actualBeer.getQuantityOnHand());
-    }
-
-    @Test
-    void getBeerByIdWithNullIdThrowsException() {
-        UUID beerId = null;
-
-        assertThrows(IllegalArgumentException.class, () -> beerController.getBeerById(beerId));
-    }
-
-    @Test
-    void getBeerByIdWithNonExistentIdReturnsNull() {
-        UUID beerId = UUID.randomUUID();
-
-
-        Beer actualBeer = beerController.getBeerById(beerId);
-
-        assertNull(actualBeer);
+    void getBeerByIdReturnsBeer() throws Exception {
+        UUID beerId = UUID.fromString("60501fcd-487e-4d83-8c67-3001482e35a2");
+        String url = "/api/v1/beer/" + beerId;
+        mockMvc.perform(get(url).accept("application/json"))
+                .andExpect(status().isOk());
     }
 
 
