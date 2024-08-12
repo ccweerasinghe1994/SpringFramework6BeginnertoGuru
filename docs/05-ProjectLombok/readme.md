@@ -427,6 +427,77 @@ public class Beer {
 
 ```
 ## 005 Project Lombok Builders
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+public class BeerServiceImpl implements BeerService {
+
+    @Override
+    public Beer getBeerById(UUID id) {
+        return Beer.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Cat")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123456")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+    }
+}
+
+```
+
+
 ## 006 Project Lombok Constructors
+
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.service.BeerService;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Controller;
+
+@AllArgsConstructor
+@Controller
+public class BeerController {
+    private final BeerService beerService;
+}
+
+```
+
+```java
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.service.BeerService;
+import lombok.Generated;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class BeerController {
+    private final BeerService beerService;
+
+    @Generated
+    public BeerController(final BeerService beerService) {
+        this.beerService = beerService;
+    }
+}
+```
 ## 007 Project Lombok Logging
 ## 008 Delombok
