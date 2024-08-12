@@ -793,49 +793,6 @@ public class BeerServiceImpl implements BeerService {
 
     }
 
-    @Override
-    public Beer getBeerById(UUID id) {
-        return beerMap.get(id);
-    }
-
-    @Override
-    public List<Beer> listAllBeers() {
-        return new ArrayList<>(beerMap.values());
-    }
-
-    @Override
-    public Beer saveNewBeer(Beer beer) {
-        Beer savedBeer = Beer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .beerName(beer.getBeerName())
-                .beerStyle(beer.getBeerStyle())
-                .upc(beer.getUpc())
-                .price(beer.getPrice())
-                .quantityOnHand(beer.getQuantityOnHand())
-                .createdDate(LocalDateTime.now())
-                .updatedDate(LocalDateTime.now())
-                .build();
-        beerMap.put(savedBeer.getId(), savedBeer);
-        return savedBeer;
-    }
-
-    @Override
-    public void updateBeer(UUID id, Beer beer) {
-        Beer existingBeer = beerMap.get(id);
-        existingBeer.setBeerName(beer.getBeerName());
-        existingBeer.setBeerStyle(beer.getBeerStyle());
-        existingBeer.setUpc(beer.getUpc());
-        existingBeer.setPrice(beer.getPrice());
-        existingBeer.setQuantityOnHand(beer.getQuantityOnHand());
-        existingBeer.setUpdatedDate(LocalDateTime.now());
-        beerMap.put(id, existingBeer);
-    }
-
-    @Override
-    public void deleteBeer(UUID id) {
-        beerMap.remove(id);
-    }
 
     @Override
     public void patchBeer(UUID id, Beer beer) {
@@ -882,42 +839,6 @@ import java.util.UUID;
 @RequestMapping("api/v1/beer")
 public class BeerController {
     private final BeerService beerService;
-
-    @GetMapping("{id}")
-    public Beer getBeerById(@PathVariable("id") UUID id) {
-        log.debug("getBeerById() called in BeerController with id: {}", id);
-        return beerService.getBeerById(id);
-    }
-
-    @GetMapping
-    public List<Beer> listAllBeers() {
-        log.debug("listAllBeers() called in BeerController");
-        return beerService.listAllBeers();
-    }
-
-    @PostMapping
-    public ResponseEntity saveNewBeer(@RequestBody Beer beer) {
-        log.debug("saveNewBeer() called in BeerController with beer: {}", beer);
-        Beer savedBeer = beerService.saveNewBeer(beer);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "api/v1/beer/" + savedBeer.getId());
-
-        return new ResponseEntity(headers, HttpStatus.CREATED);
-    }
-
-    @PutMapping("{id}")
-    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
-        log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beer);
-        beerService.updateBeer(id, beer);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
-    }
-
-    @DeleteMapping("{id}")
-    public ResponseEntity deleteBeer(@PathVariable("id") UUID id) {
-        log.debug("deleteBeer() called in BeerController with id: {}", id);
-        beerService.deleteBeer(id);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
-    }
 
     @PatchMapping("{id}")
     public ResponseEntity patchBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
