@@ -15,8 +15,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 //@SpringBootTest
 @WebMvcTest(BeerController.class)
@@ -33,11 +32,37 @@ class BeerControllerTest {
     void getBeerByIdReturnsBeer() throws Exception {
         Beer beer = beerServiceImpl.listAllBeers().get(0);
         given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
-        UUID beerId = UUID.fromString("60501fcd-487e-4d83-8c67-3001482e35a2");
-        String url = "/api/v1/beer/" + beerId;
+
+        String url = "/api/v1/beer/" + beer.getId();
         mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(beer.getId().toString()))
+                .andExpect(jsonPath("$.beerName").value(beer.getBeerName()))
+                .andExpect(jsonPath("$.beerStyle").value(beer.getBeerStyle().toString()))
+                .andExpect(jsonPath("$.upc").value(beer.getUpc()))
+                .andExpect(jsonPath("$.quantityOnHand").value(beer.getQuantityOnHand()))
+                .andExpect(jsonPath("$.price").value(beer.getPrice().toString()))
+                .andExpect(jsonPath("$.createdDate").exists())
+                .andExpect(jsonPath("$.updatedDate").exists());
+        ;
+    }
+
+    @Test
+    void listAllBeersReturnsListOfBeers() throws Exception {
+        given(beerService.listAllBeers()).willReturn(beerServiceImpl.listAllBeers());
+
+        mockMvc.perform(get("/api/v1/beer").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].beerName").exists())
+                .andExpect(jsonPath("$[0].beerStyle").exists())
+                .andExpect(jsonPath("$[0].upc").exists())
+                .andExpect(jsonPath("$[0].quantityOnHand").exists())
+                .andExpect(jsonPath("$[0].price").exists())
+                .andExpect(jsonPath("$[0].createdDate").exists())
+                .andExpect(jsonPath("$[0].updatedDate").exists());
     }
 
 

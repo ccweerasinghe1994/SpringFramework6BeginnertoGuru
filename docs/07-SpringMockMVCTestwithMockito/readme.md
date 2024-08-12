@@ -103,7 +103,112 @@ class BeerControllerTest {
 }
 ```
 ## 005 Using JSON Matchers
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void getBeerByIdReturnsBeer() throws Exception {
+        Beer beer = beerServiceImpl.listAllBeers().get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
+
+        String url = "/api/v1/beer/" + beer.getId();
+        mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(beer.getId().toString()))
+                .andExpect(jsonPath("$.beerName").value(beer.getBeerName()))
+                .andExpect(jsonPath("$.beerStyle").value(beer.getBeerStyle().toString()))
+                .andExpect(jsonPath("$.upc").value(beer.getUpc()))
+                .andExpect(jsonPath("$.quantityOnHand").value(beer.getQuantityOnHand()))
+                .andExpect(jsonPath("$.price").value(beer.getPrice().toString()))
+                .andExpect(jsonPath("$.createdDate").exists())
+                .andExpect(jsonPath("$.updatedDate").exists());
+        ;
+    }
+
+
+}
+```
 ## 006 MockMVC Test List Beers
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void listAllBeersReturnsListOfBeers() throws Exception {
+        given(beerService.listAllBeers()).willReturn(beerServiceImpl.listAllBeers());
+
+        mockMvc.perform(get("/api/v1/beer").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].beerName").exists())
+                .andExpect(jsonPath("$[0].beerStyle").exists())
+                .andExpect(jsonPath("$[0].upc").exists())
+                .andExpect(jsonPath("$[0].quantityOnHand").exists())
+                .andExpect(jsonPath("$[0].price").exists())
+                .andExpect(jsonPath("$[0].createdDate").exists())
+                .andExpect(jsonPath("$[0].updatedDate").exists());
+    }
+
+
+}
+```
 ## 007 Create JSON Using Jackson
 ## 008 MockMVC Test Create Beer
 ## 009 MockMVC Test Update Beer
