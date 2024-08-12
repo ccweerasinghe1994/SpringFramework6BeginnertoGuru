@@ -1,3 +1,11 @@
+# 06 - Spring MVC Rest Services
+
+## 001 Introduction
+![alt text](image.png)
+## 002 Introducing SFG Beer Works
+![alt text](image-1.png)
+## 003 HTTP GET with Spring MVC List Operation
+```java
 package com.wchamara.spring6restmvc.service;
 
 import com.wchamara.spring6restmvc.model.Beer;
@@ -67,3 +75,65 @@ public class BeerServiceImpl implements BeerService {
         return new ArrayList<>(beerMap.values());
     }
 }
+
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.Beer;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface BeerService {
+    Beer getBeerById(UUID id);
+
+    List<Beer> listAllBeers();
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@AllArgsConstructor
+@Slf4j
+@RestController
+public class BeerController {
+    private final BeerService beerService;
+
+    public Beer getBeerById(UUID id) {
+        log.debug("getBeerById() called in BeerController with id: {}", id);
+        return beerService.getBeerById(id);
+    }
+
+    @RequestMapping("api/v1/beer")
+    public List<Beer> listAllBeers() {
+        log.debug("listAllBeers() called in BeerController");
+        return beerService.listAllBeers();
+    }
+}
+
+```
+```java
+
+```
+
+
+## 004 HTTP Client
+## 005 Using Path Parameters - Get By Id
+## 006 Spring Boot Development Tools
+## 007 HTTP POST with Spring MVC
+## 008 Set Header on HTTP Response
+## 009 HTTP PUT with Spring MVC
+## 010 HTTP DELETE with Spring MVC
+## 011 HTTP PATCH with Spring MVC
