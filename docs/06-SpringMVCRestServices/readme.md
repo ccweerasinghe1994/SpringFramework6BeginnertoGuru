@@ -126,7 +126,54 @@ public class BeerController {
 ```
 
 ## 004 HTTP Client
+![alt text](image-2.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
 ## 005 Using Path Parameters - Get By Id
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@AllArgsConstructor
+@Slf4j
+@RestController
+@RequestMapping("api/v1/beer")
+public class BeerController {
+    private final BeerService beerService;
+
+    @GetMapping("{id}")
+    public Beer getBeerById(@PathVariable("id") UUID id) {
+        log.debug("getBeerById() called in BeerController with id: {}", id);
+        return beerService.getBeerById(id);
+    }
+
+    @GetMapping
+    public List<Beer> listAllBeers() {
+        log.debug("listAllBeers() called in BeerController");
+        return beerService.listAllBeers();
+    }
+}
+```
+The selected code is a Java class named BeerController that serves as a RESTful API controller for managing beer-related operations. It is annotated with @RestController, indicating that it handles HTTP requests and returns the response directly as the body of the response, rather than rendering a view.
+
+The class has a constructor annotated with @AllArgsConstructor, which is a Lombok annotation that generates a constructor with all the required dependencies. This constructor is used to inject an instance of the BeerService class into the BeerController.
+
+The BeerController class has two methods annotated with @GetMapping. The first method, getBeerById, takes a UUID parameter named id and returns a Beer object. It is responsible for retrieving a beer by its ID. Inside the method, there is a logging statement that logs the ID of the beer being retrieved. The method delegates the actual retrieval operation to the beerService instance by calling the getBeerById method on it.
+
+The second method, listAllBeers, does not take any parameters and returns a list of Beer objects. It is responsible for retrieving all the beers. Similar to the previous method, it logs a debug message indicating that the method has been called. The method delegates the retrieval operation to the beerService instance by calling the listAllBeers method on it.
+
+Overall, this BeerController class provides endpoints for retrieving a single beer by ID and retrieving a list of all beers. It relies on the BeerService class to perform the actual operations.
 ## 006 Spring Boot Development Tools
 ## 007 HTTP POST with Spring MVC
 ## 008 Set Header on HTTP Response
