@@ -314,6 +314,61 @@ class BeerControllerTest {
 }
 ```
 ## 009 MockMVC Test Update Beer
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        Beer beer = beerServiceImpl.listAllBeers().get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
+
+        String urlTemplate = "/api/v1/beer/" + beer.getId();
+        mockMvc.perform(
+                        put(urlTemplate)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beer))
+                )
+                .andExpect(status().isNoContent());
+        verify(beerService).updateBeer(any(UUID.class), any(Beer.class));
+    }
+
+
+}
+```
 ## 010 MockMVC Test Delete Beer
 ## 011 MockMVC Test Patch Beer
 ## 012 DRY - Don't Repeat Yourself
