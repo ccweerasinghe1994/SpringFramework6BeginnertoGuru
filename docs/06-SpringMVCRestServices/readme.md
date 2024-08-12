@@ -124,10 +124,6 @@ public class BeerController {
 }
 
 ```
-```java
-
-```
-
 
 ## 004 HTTP Client
 ## 005 Using Path Parameters - Get By Id
