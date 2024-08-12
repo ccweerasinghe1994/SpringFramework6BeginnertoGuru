@@ -205,12 +205,114 @@ class BeerControllerTest {
                 .andExpect(jsonPath("$[0].createdDate").exists())
                 .andExpect(jsonPath("$[0].updatedDate").exists());
     }
+}
+```
+## 007 Create JSON Using Jackson
+
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void saveNewBeerReturnsCreated() throws Exception {
+        Beer beer = beerServiceImpl.listAllBeers().get(0);
+        System.out.println(objectMapper.writeValueAsString(beer));
+
+    }
+
+
+}
+``` 
+## 008 MockMVC Test Create Beer
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void saveNewBeerReturnsCreated() throws Exception {
+        Beer beer = beerServiceImpl.listAllBeers().get(0);
+        beer.setId(null);
+        beer.setVersion(null);
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers().get(1));
+
+        mockMvc.perform(
+                        post("/api/v1/beer")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beer))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+
+    }
 
 
 }
 ```
-## 007 Create JSON Using Jackson
-## 008 MockMVC Test Create Beer
 ## 009 MockMVC Test Update Beer
 ## 010 MockMVC Test Delete Beer
 ## 011 MockMVC Test Patch Beer

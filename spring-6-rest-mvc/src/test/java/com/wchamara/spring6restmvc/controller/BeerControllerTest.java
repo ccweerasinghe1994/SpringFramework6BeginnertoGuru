@@ -1,5 +1,6 @@
 package com.wchamara.spring6restmvc.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wchamara.spring6restmvc.model.Beer;
 import com.wchamara.spring6restmvc.service.BeerService;
 import com.wchamara.spring6restmvc.service.BeerServiceImpl;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 //@SpringBootTest
@@ -25,6 +27,9 @@ class BeerControllerTest {
 
     @MockBean
     BeerService beerService;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
 
@@ -63,6 +68,25 @@ class BeerControllerTest {
                 .andExpect(jsonPath("$[0].price").exists())
                 .andExpect(jsonPath("$[0].createdDate").exists())
                 .andExpect(jsonPath("$[0].updatedDate").exists());
+    }
+
+    @Test
+    void saveNewBeerReturnsCreated() throws Exception {
+        Beer beer = beerServiceImpl.listAllBeers().get(0);
+        beer.setId(null);
+        beer.setVersion(null);
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers().get(1));
+
+        mockMvc.perform(
+                        post("/api/v1/beer")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beer))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+
     }
 
 
