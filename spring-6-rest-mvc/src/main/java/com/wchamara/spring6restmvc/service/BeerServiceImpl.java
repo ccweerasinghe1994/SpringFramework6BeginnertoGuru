@@ -15,7 +15,7 @@ public class BeerServiceImpl implements BeerService {
 
     public BeerServiceImpl() {
         Beer beer1 = Beer.builder()
-                .id(UUID.randomUUID())
+                .id(UUID.fromString("60501fcd-487e-4d83-8c67-3001482e35a2"))
                 .version(1)
                 .beerName("Galaxy Cat")
                 .beerStyle(BeerStyle.PALE_ALE)
@@ -82,5 +82,17 @@ public class BeerServiceImpl implements BeerService {
                 .build();
         beerMap.put(savedBeer.getId(), savedBeer);
         return savedBeer;
+    }
+
+    @Override
+    public void updateBeer(UUID id, Beer beer) {
+        Beer existingBeer = beerMap.get(id);
+        existingBeer.setBeerName(beer.getBeerName());
+        existingBeer.setBeerStyle(beer.getBeerStyle());
+        existingBeer.setUpc(beer.getUpc());
+        existingBeer.setPrice(beer.getPrice());
+        existingBeer.setQuantityOnHand(beer.getQuantityOnHand());
+        existingBeer.setUpdatedDate(LocalDateTime.now());
+        beerMap.put(id, existingBeer);
     }
 }

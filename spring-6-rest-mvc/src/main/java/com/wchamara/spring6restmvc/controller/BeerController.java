@@ -40,4 +40,11 @@ public class BeerController {
 
         return new ResponseEntity(headers, HttpStatus.CREATED);
     }
+
+    @PutMapping("{id}")
+    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
+        log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beer);
+        beerService.updateBeer(id, beer);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
 }
