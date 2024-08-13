@@ -15,23 +15,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @RestController
-@RequestMapping("api/v1/beer")
 public class BeerController {
+
+    public static final String BEER_PATH = "/api/v1/beer";
+    public static final String BEER_PATH_ID = BEER_PATH + "/{id}";
+
     private final BeerService beerService;
 
-    @GetMapping("{id}")
+    @GetMapping(BEER_PATH_ID)
     public Beer getBeerById(@PathVariable("id") UUID id) {
         log.debug("getBeerById() called in BeerController with id: {}", id);
         return beerService.getBeerById(id);
     }
 
-    @GetMapping
+    @GetMapping(BEER_PATH)
     public List<Beer> listAllBeers() {
         log.debug("listAllBeers() called in BeerController");
         return beerService.listAllBeers();
     }
 
-    @PostMapping
+    @PostMapping(BEER_PATH)
     public ResponseEntity saveNewBeer(@RequestBody Beer beer) {
         log.debug("saveNewBeer() called in BeerController with beer: {}", beer);
         Beer savedBeer = beerService.saveNewBeer(beer);
@@ -41,21 +44,21 @@ public class BeerController {
         return new ResponseEntity(headers, HttpStatus.CREATED);
     }
 
-    @PutMapping("{id}")
+    @PutMapping(BEER_PATH_ID)
     public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
         log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beer);
         beerService.updateBeer(id, beer);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping(BEER_PATH_ID)
     public ResponseEntity deleteBeer(@PathVariable("id") UUID id) {
         log.debug("deleteBeer() called in BeerController with id: {}", id);
         beerService.deleteBeer(id);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @PatchMapping("{id}")
+    @PatchMapping(BEER_PATH_ID)
     public ResponseEntity patchBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
         log.debug("patchBeer() called in BeerController with id: {} and beer: {}", id, beer);
         beerService.patchBeer(id, beer);
