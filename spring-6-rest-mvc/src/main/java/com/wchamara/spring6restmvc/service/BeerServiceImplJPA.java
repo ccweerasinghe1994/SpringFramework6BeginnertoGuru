@@ -16,18 +16,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BeerServiceImplJPA implements BeerService {
 
-    BeerRepository beerRepository;
+    private final BeerRepository beerRepository;
 
-    BeerMapper beerMapper;
+    private final BeerMapper beerMapper;
 
     @Override
     public Optional<BeerDTO> getBeerById(UUID id) {
-        return Optional.empty();
+        return Optional.ofNullable(beerMapper.beerToBeerDto(beerRepository.findById(id).orElse(null)));
     }
 
     @Override
     public List<BeerDTO> listAllBeers() {
-        return List.of();
+        return beerRepository.findAll().stream().map(beerMapper::beerToBeerDto).toList();
     }
 
     @Override
