@@ -965,7 +965,34 @@ class BeerControllerIT {
 ## 016 JPA Update Beer by Id Operation
 
 ```java
+    @Override
+    public void updateBeer(UUID id, BeerDTO beerDTO) {
+        beerRepository.findById(id).ifPresent(beer -> {
+            beer.setBeerName(beerDTO.getBeerName());
+            beer.setBeerStyle(beerDTO.getBeerStyle());
+            beer.setPrice(beerDTO.getPrice());
+            beer.setQuantityOnHand(beerDTO.getQuantityOnHand());
+            beerRepository.save(beer);
+        });
+    }
+```
+```java
 
+    @Test
+    @Transactional
+    @Rollback
+    void testUpdateBeer() {
+
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        beerDTO.setBeerName("Updated Beer");
+        ResponseEntity responseEntity = beerController.updateBeer(beerDTO.getId(), beerDTO);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+
+        Beer updatedBeer = beerRepository.findById(beerDTO.getId()).get();
+        assertThat(updatedBeer.getBeerName()).isEqualTo("Updated Beer");
+    }
 ```
 
 ## 017 JPA Update Beer Not Found

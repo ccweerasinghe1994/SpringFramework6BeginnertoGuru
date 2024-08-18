@@ -73,6 +73,21 @@ class BeerControllerIT {
         assertThat(savedBeer.getBeerName()).isEqualTo("New Beer");
         assertThat(savedBeer.getId()).isEqualTo(savedId);
 
+    }
 
+    @Test
+    @Transactional
+    @Rollback
+    void testUpdateBeer() {
+
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        beerDTO.setBeerName("Updated Beer");
+        ResponseEntity responseEntity = beerController.updateBeer(beerDTO.getId(), beerDTO);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+
+        Beer updatedBeer = beerRepository.findById(beerDTO.getId()).get();
+        assertThat(updatedBeer.getBeerName()).isEqualTo("Updated Beer");
     }
 }
