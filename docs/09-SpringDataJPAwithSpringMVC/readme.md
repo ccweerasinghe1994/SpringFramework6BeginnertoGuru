@@ -11,12 +11,75 @@
 
 ## 003 Refactoring to DTOs
 ```java
+package com.wchamara.spring6restmvc.model;
+
+import lombok.Builder;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+@Builder
+public class BeerDTO {
+    private UUID id;
+    private Integer version;
+    private String beerName;
+    private BeerStyle beerStyle;
+    private String upc;
+    private Integer quantityOnHand;
+    private BigDecimal price;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+}
 
 ```
 ```java
+package com.wchamara.spring6restmvc.model;
 
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Created by jt, Spring Framework Guru.
+ */
+@Data
+@Builder
+public class CustomerDTO {
+
+    private String name;
+    private UUID id;
+    private Integer version;
+    private LocalDateTime createdDate;
+    private LocalDateTime updateDate;
+}
 ```
 ```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BeerService {
+    Optional<BeerDTO> getBeerById(UUID id);
+
+    List<BeerDTO> listAllBeers();
+
+    BeerDTO saveNewBeer(BeerDTO beerDTO);
+
+    void updateBeer(UUID id, BeerDTO beerDTO);
+
+    void deleteBeer(UUID id);
+
+    void patchBeer(UUID id, BeerDTO beerDTO);
+}
 
 ```
 ```java
