@@ -997,9 +997,188 @@ class BeerControllerIT {
 
 ## 017 JPA Update Beer Not Found
 ```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BeerService {
+    Optional<BeerDTO> getBeerById(UUID id);
+
+    List<BeerDTO> listAllBeers();
+
+    BeerDTO saveNewBeer(BeerDTO beerDTO);
+
+    Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO);
+
+    void deleteBeer(UUID id);
+
+    void patchBeer(UUID id, BeerDTO beerDTO);
+}
 
 ```
 
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+public class BeerServiceImpl implements BeerService {
+
+    private Map<UUID, BeerDTO> beerMap = new HashMap<>();
+
+    public BeerServiceImpl() {
+        BeerDTO beerDTO1 = BeerDTO.builder()
+                .id(UUID.fromString("60501fcd-487e-4d83-8c67-3001482e35a2"))
+                .version(1)
+                .beerName("Galaxy Cat")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123456")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        BeerDTO beerDTO2 = BeerDTO.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Dog")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123457")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        BeerDTO beerDTO3 = BeerDTO.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Fish")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123458")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        beerMap.put(beerDTO1.getId(), beerDTO1);
+        beerMap.put(beerDTO2.getId(), beerDTO2);
+        beerMap.put(beerDTO3.getId(), beerDTO3);
+
+
+    }
+
+    @Override
+    public Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO) {
+        BeerDTO existingBeerDTO = beerMap.get(id);
+        existingBeerDTO.setBeerName(beerDTO.getBeerName());
+        existingBeerDTO.setBeerStyle(beerDTO.getBeerStyle());
+        existingBeerDTO.setUpc(beerDTO.getUpc());
+        existingBeerDTO.setPrice(beerDTO.getPrice());
+        existingBeerDTO.setQuantityOnHand(beerDTO.getQuantityOnHand());
+        existingBeerDTO.setUpdatedDate(LocalDateTime.now());
+        beerMap.put(id, existingBeerDTO);
+        return Optional.of(existingBeerDTO);
+    }
+
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.mapper.BeerMapper;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+@Service
+@Primary
+@RequiredArgsConstructor
+public class BeerServiceImplJPA implements BeerService {
+
+    private final BeerRepository beerRepository;
+
+    private final BeerMapper beerMapper;
+
+    @Override
+    public Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO) {
+        AtomicReference<Optional<BeerDTO>> beerOptional = new AtomicReference<>();
+        beerRepository.findById(id).ifPresentOrElse(beer -> {
+            beer.setBeerName(beerDTO.getBeerName());
+            beer.setBeerStyle(beerDTO.getBeerStyle());
+            beer.setPrice(beerDTO.getPrice());
+            beer.setQuantityOnHand(beerDTO.getQuantityOnHand());
+
+            beerOptional.set(Optional.of(beerMapper.beerToBeerDto(beerRepository.save(beer))));
+
+        }, () -> {
+            beerOptional.set(Optional.empty());
+        });
+
+        return beerOptional.get();
+    }
+}
+
+```
+```java
+
+    @PutMapping(BEER_PATH_ID)
+    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody BeerDTO beerDTO) {
+        log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beerDTO);
+        if (beerService.updateBeer(id, beerDTO).isEmpty()) {
+            throw new NotFoundException();
+        }
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+```
+```java
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers().get(0);
+        given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beerDTO));
+
+
+        mockMvc.perform(
+                        put(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isNoContent());
+        verify(beerService).updateBeer(any(UUID.class), any(BeerDTO.class));
+    }
+```
+```java
+    @Test
+    void testUpdateBeerNotFound() {
+        BeerDTO beerDTO = BeerDTO.builder().beerName("Updated Beer").build();
+        assertThrows(NotFoundException.class, () -> beerController.updateBeer(UUID.randomUUID(), beerDTO));
+    }
+
+```
 
 ## 018 JPA Delete Beer by Id
 ```java

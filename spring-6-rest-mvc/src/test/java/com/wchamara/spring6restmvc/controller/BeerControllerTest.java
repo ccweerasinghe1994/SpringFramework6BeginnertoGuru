@@ -116,7 +116,8 @@ class BeerControllerTest {
     @Test
     void updateBeerReturnsNoContent() throws Exception {
         BeerDTO beerDTO = beerServiceImpl.listAllBeers().get(0);
-        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beerDTO));
+        given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beerDTO));
+
 
         mockMvc.perform(
                         put(BeerController.BEER_PATH_ID, beerDTO.getId())
