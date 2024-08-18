@@ -1,6 +1,6 @@
 package com.wchamara.spring6restmvc.controller;
 
-import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
 import com.wchamara.spring6restmvc.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,31 +23,31 @@ public class BeerController {
     private final BeerService beerService;
 
     @GetMapping(BEER_PATH_ID)
-    public Beer getBeerById(@PathVariable("id") UUID id) {
+    public BeerDTO getBeerById(@PathVariable("id") UUID id) {
         log.debug("getBeerById() called in BeerController with id: {}", id);
         return beerService.getBeerById(id).orElseThrow(NotFoundException::new);
     }
 
     @GetMapping(BEER_PATH)
-    public List<Beer> listAllBeers() {
+    public List<BeerDTO> listAllBeers() {
         log.debug("listAllBeers() called in BeerController");
         return beerService.listAllBeers();
     }
 
     @PostMapping(BEER_PATH)
-    public ResponseEntity saveNewBeer(@RequestBody Beer beer) {
-        log.debug("saveNewBeer() called in BeerController with beer: {}", beer);
-        Beer savedBeer = beerService.saveNewBeer(beer);
+    public ResponseEntity saveNewBeer(@RequestBody BeerDTO beerDTO) {
+        log.debug("saveNewBeer() called in BeerController with beer: {}", beerDTO);
+        BeerDTO savedBeerDTO = beerService.saveNewBeer(beerDTO);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "api/v1/beer/" + savedBeer.getId());
+        headers.add("Location", "api/v1/beer/" + savedBeerDTO.getId());
 
         return new ResponseEntity(headers, HttpStatus.CREATED);
     }
 
     @PutMapping(BEER_PATH_ID)
-    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
-        log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beer);
-        beerService.updateBeer(id, beer);
+    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody BeerDTO beerDTO) {
+        log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beerDTO);
+        beerService.updateBeer(id, beerDTO);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
@@ -59,9 +59,9 @@ public class BeerController {
     }
 
     @PatchMapping(BEER_PATH_ID)
-    public ResponseEntity patchBeer(@PathVariable("id") UUID id, @RequestBody Beer beer) {
-        log.debug("patchBeer() called in BeerController with id: {} and beer: {}", id, beer);
-        beerService.patchBeer(id, beer);
+    public ResponseEntity patchBeer(@PathVariable("id") UUID id, @RequestBody BeerDTO beerDTO) {
+        log.debug("patchBeer() called in BeerController with id: {} and beer: {}", id, beerDTO);
+        beerService.patchBeer(id, beerDTO);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 

@@ -1,21 +1,21 @@
 package com.wchamara.spring6restmvc.service;
 
-import com.wchamara.spring6restmvc.model.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface BeerService {
-    Optional<Beer> getBeerById(UUID id);
+    Optional<BeerDTO> getBeerById(UUID id);
 
-    List<Beer> listAllBeers();
+    List<BeerDTO> listAllBeers();
 
-    Beer saveNewBeer(Beer beer);
+    BeerDTO saveNewBeer(BeerDTO beerDTO);
 
-    void updateBeer(UUID id, Beer beer);
+    void updateBeer(UUID id, BeerDTO beerDTO);
 
     void deleteBeer(UUID id);
 
-    void patchBeer(UUID id, Beer beer);
+    void patchBeer(UUID id, BeerDTO beerDTO);
 }

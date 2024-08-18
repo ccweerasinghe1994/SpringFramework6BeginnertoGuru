@@ -10,7 +10,24 @@
 ![alt text](image-5.png)
 
 ## 003 Refactoring to DTOs
+```java
 
+```
+```java
+
+```
+```java
+
+```
+```java
+
+```
+```java
+
+```
+```java
+
+```
 
 ## 004 Spring Data JPA Dependencies
 
