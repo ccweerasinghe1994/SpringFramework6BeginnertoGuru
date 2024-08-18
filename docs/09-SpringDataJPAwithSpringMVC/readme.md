@@ -734,9 +734,63 @@ public class BeerServiceImplJPA implements BeerService {
 
 ## 013 Controller Integration Test
 ```java
+package com.wchamara.spring6restmvc.controller;
 
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@SpringBootTest
+class BeerControllerIT {
+
+    @Autowired
+    BeerController beerController;
+    @Autowired
+    private BeerRepository beerRepository;
+
+
+    @Test
+    void testListAllBeers() {
+        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+
+        assertEquals(3, beerDTOS.size());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testEmptyListBeers() {
+        beerRepository.deleteAll();
+        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+        assertThat(beerDTOS.size()).isEqualTo(0);
+    }
+}
+```
+The `testEmptyListBeers` method in the `BeerControllerIT` class is a JUnit test method designed to verify that the list of beers is empty after all entries in the `beerRepository` are deleted. This method is annotated with `@Test`, `@Transactional`, and `@Rollback`.
+
+The `@Test` annotation indicates that this method is a test case. The `@Transactional` annotation ensures that the method runs within a transaction. This means that all operations within the method are executed in a single transaction context. If any operation fails, the transaction is rolled back, ensuring data consistency.
+
+The `@Rollback` annotation ensures that the transaction is rolled back after the test method completes. This is useful in testing scenarios to ensure that the database state is not altered by the test.
+
+Within the method, `beerRepository.deleteAll()` is called to delete all entries in the `beerRepository`. Then, `beerController.listAllBeers()` is called to retrieve the list of beers, which is expected to be empty. The `assertThat` method from AssertJ is used to assert that the size of the retrieved list is zero.
+
+```java
+@Test
+@Transactional
+@Rollback
+void testEmptyListBeers() {
+    beerRepository.deleteAll();
+    List<BeerDTO> beerDTOS = beerController.listAllBeers();
+    assertThat(beerDTOS.size()).isEqualTo(0);
+}
 ```
 
+This test ensures that the `beerController.listAllBeers` method correctly returns an empty list when there are no beers in the repository, and the use of transactions and rollbacks ensures that the test does not affect the actual database state.
 
 ## 014 Testing for expected Exceptions
 ```java
