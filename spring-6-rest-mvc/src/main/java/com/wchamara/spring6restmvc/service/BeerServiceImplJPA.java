@@ -1,5 +1,6 @@
 package com.wchamara.spring6restmvc.service;
 
+import com.wchamara.spring6restmvc.entities.Beer;
 import com.wchamara.spring6restmvc.mapper.BeerMapper;
 import com.wchamara.spring6restmvc.model.BeerDTO;
 import com.wchamara.spring6restmvc.repositories.BeerRepository;
@@ -32,7 +33,8 @@ public class BeerServiceImplJPA implements BeerService {
 
     @Override
     public BeerDTO saveNewBeer(BeerDTO beerDTO) {
-        return null;
+        Beer savedBeer = beerRepository.save(beerMapper.beerDtoToBeer(beerDTO));
+        return beerMapper.beerToBeerDto(savedBeer);
     }
 
     @Override
