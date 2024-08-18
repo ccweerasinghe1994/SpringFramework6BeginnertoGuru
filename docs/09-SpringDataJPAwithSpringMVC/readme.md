@@ -443,6 +443,150 @@ Finally, the `<compilerArgs>` section includes additional arguments for the comp
 This configuration ensures that the Maven Compiler Plugin is set up correctly to handle the project's specific needs, including the use of annotation processors and compatibility with the specified Java version.
 ## 010 MapStruct Mappers
 
+```java
+package com.wchamara.spring6restmvc.mapper;
+
+import com.wchamara.spring6restmvc.entities.Customer;
+import com.wchamara.spring6restmvc.model.CustomerDTO;
+import org.mapstruct.Mapper;
+
+@Mapper
+public interface CustomerMapper {
+
+    Customer customerDtoToCustomer(CustomerDTO customerDto);
+
+    CustomerDTO customerToCustomerDto(Customer customer);
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.mapper;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import org.mapstruct.Mapper;
+
+@Mapper
+public interface BeerMapper {
+
+    Beer beerDtoToBeer(BeerDTO beerDto);
+
+    BeerDTO beerToBeerDto(Beer beer);
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.mapper;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2024-08-18T15:48:09+0530",
+    comments = "version: 1.6.0, compiler: javac, environment: Java 21.0.3 (Amazon.com Inc.)"
+)
+@Component
+public class BeerMapperImpl implements BeerMapper {
+
+    @Override
+    public Beer beerDtoToBeer(BeerDTO beerDto) {
+        if ( beerDto == null ) {
+            return null;
+        }
+
+        Beer.BeerBuilder beer = Beer.builder();
+
+        beer.id( beerDto.getId() );
+        beer.version( beerDto.getVersion() );
+        beer.beerName( beerDto.getBeerName() );
+        beer.beerStyle( beerDto.getBeerStyle() );
+        beer.upc( beerDto.getUpc() );
+        beer.quantityOnHand( beerDto.getQuantityOnHand() );
+        beer.price( beerDto.getPrice() );
+        beer.createdDate( beerDto.getCreatedDate() );
+        beer.updatedDate( beerDto.getUpdatedDate() );
+
+        return beer.build();
+    }
+
+    @Override
+    public BeerDTO beerToBeerDto(Beer beer) {
+        if ( beer == null ) {
+            return null;
+        }
+
+        BeerDTO.BeerDTOBuilder beerDTO = BeerDTO.builder();
+
+        beerDTO.id( beer.getId() );
+        beerDTO.version( beer.getVersion() );
+        beerDTO.beerName( beer.getBeerName() );
+        beerDTO.beerStyle( beer.getBeerStyle() );
+        beerDTO.upc( beer.getUpc() );
+        beerDTO.quantityOnHand( beer.getQuantityOnHand() );
+        beerDTO.price( beer.getPrice() );
+        beerDTO.createdDate( beer.getCreatedDate() );
+        beerDTO.updatedDate( beer.getUpdatedDate() );
+
+        return beerDTO.build();
+    }
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.mapper;
+
+import com.wchamara.spring6restmvc.entities.Customer;
+import com.wchamara.spring6restmvc.model.CustomerDTO;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2024-08-18T15:48:09+0530",
+    comments = "version: 1.6.0, compiler: javac, environment: Java 21.0.3 (Amazon.com Inc.)"
+)
+@Component
+public class CustomerMapperImpl implements CustomerMapper {
+
+    @Override
+    public Customer customerDtoToCustomer(CustomerDTO customerDto) {
+        if ( customerDto == null ) {
+            return null;
+        }
+
+        Customer.CustomerBuilder customer = Customer.builder();
+
+        customer.id( customerDto.getId() );
+        customer.version( customerDto.getVersion() );
+        customer.name( customerDto.getName() );
+        customer.createdDate( customerDto.getCreatedDate() );
+        customer.updateDate( customerDto.getUpdateDate() );
+
+        return customer.build();
+    }
+
+    @Override
+    public CustomerDTO customerToCustomerDto(Customer customer) {
+        if ( customer == null ) {
+            return null;
+        }
+
+        CustomerDTO.CustomerDTOBuilder customerDTO = CustomerDTO.builder();
+
+        customerDTO.name( customer.getName() );
+        customerDTO.id( customer.getId() );
+        customerDTO.version( customer.getVersion() );
+        customerDTO.createdDate( customer.getCreatedDate() );
+        customerDTO.updateDate( customer.getUpdateDate() );
+
+        return customerDTO.build();
+    }
+}
+
+```
 
 ## 011 JPA Services
 
