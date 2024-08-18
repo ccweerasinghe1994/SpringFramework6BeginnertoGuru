@@ -285,7 +285,65 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
 ## 008 Spring Boot JPA Test Splice
 
+```java
+package com.wchamara.spring6restmvc.repositories;
 
+import com.wchamara.spring6restmvc.entities.Customer;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+@DataJpaTest
+class CustomerRepositoryTest {
+
+    @Autowired
+    CustomerRepository customerRepository;
+
+    @Test
+    void savedCustomer() {
+        // Given
+        Customer customer = Customer.builder().name("Chamara").build();
+
+        // When
+        Customer savedCustomer = customerRepository.save(customer);
+
+        // Then
+        assertThat(savedCustomer).isNotNull();
+        assertThat(savedCustomer.getName()).isEqualTo("Chamara");
+        assertThat(savedCustomer.getId()).isNotNull();
+    }
+}
+```
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+@DataJpaTest
+class BeerRepositoryTest {
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    @Test
+    void saveBeer() {
+
+        Beer budweiser1 = Beer.builder().beerName("Budweiser").build();
+        Beer savedBudweiser = beerRepository.save(budweiser1);
+
+        assertThat(savedBudweiser).isNotNull();
+        assertThat(savedBudweiser.getBeerName()).isEqualTo("Budweiser");
+        assertThat(savedBudweiser.getId()).isNotNull();
+    }
+}
+```
 ## 009 MapStruct Dependencies and Configuration
 
 
