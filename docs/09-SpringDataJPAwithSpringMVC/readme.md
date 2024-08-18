@@ -255,6 +255,33 @@ public class Beer {
 
 ## 007 Spring Data JPA Repositories
 
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface BeerRepository extends JpaRepository<Beer, UUID> {
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface CustomerRepository extends JpaRepository<Customer, UUID> {
+}
+
+```
+
+
+
 
 ## 008 Spring Boot JPA Test Splice
 
