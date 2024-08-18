@@ -589,27 +589,154 @@ public class CustomerMapperImpl implements CustomerMapper {
 ```
 
 ## 011 JPA Services
+```java
+package com.wchamara.spring6restmvc.service;
 
+import com.wchamara.spring6restmvc.mapper.BeerMapper;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+@Primary
+@RequiredArgsConstructor
+public class BeerServiceImplJPA implements BeerService {
+
+    BeerRepository beerRepository;
+
+    BeerMapper beerMapper;
+
+    @Override
+    public Optional<BeerDTO> getBeerById(UUID id) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<BeerDTO> listAllBeers() {
+        return List.of();
+    }
+
+    @Override
+    public BeerDTO saveNewBeer(BeerDTO beerDTO) {
+        return null;
+    }
+
+    @Override
+    public void updateBeer(UUID id, BeerDTO beerDTO) {
+
+    }
+
+    @Override
+    public void deleteBeer(UUID id) {
+
+    }
+
+    @Override
+    public void patchBeer(UUID id, BeerDTO beerDTO) {
+
+    }
+}
+
+```
+
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.CustomerDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Primary
+@RequiredArgsConstructor
+@Service
+public class CustomerServiceImplJPA implements CustomerService {
+    @Override
+    public Optional<CustomerDTO> getCustomerById(UUID uuid) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<CustomerDTO> getAllCustomers() {
+        return List.of();
+    }
+
+    @Override
+    public CustomerDTO saveNewCustomer(CustomerDTO customer) {
+        return null;
+    }
+
+    @Override
+    public void updateCustomerById(UUID customerId, CustomerDTO customer) {
+
+    }
+
+    @Override
+    public void deleteCustomerById(UUID customerId) {
+
+    }
+
+    @Override
+    public void patchCustomerById(UUID customerId, CustomerDTO customer) {
+
+    }
+}
+
+```
 ## 012 JPA Get Operations
+```java
+
+```
 
 
 ## 013 Controller Integration Test
+```java
+
+```
 
 
 ## 014 Testing for expected Exceptions
+```java
+
+```
 
 
 ## 015 JPA Save New Beer Operation
 
+```java
+
+```
 
 ## 016 JPA Update Beer by Id Operation
 
+```java
+
+```
 
 ## 017 JPA Update Beer Not Found
+```java
+
+```
 
 
 ## 018 JPA Delete Beer by Id
+```java
+
+```
 
 
 ## 019 JPA Delete by Id Not Found
+
+```java
+
+```
