@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -47,7 +48,7 @@ class BeerControllerTest {
     @Test
     void getBeerByIdReturnsBeer() throws Exception {
         Beer beer = beerServiceImpl.listAllBeers().get(0);
-        given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beer));
 
 
         mockMvc.perform(get(BeerController.BEER_PATH_ID, beer.getId()).accept(MediaType.APPLICATION_JSON))
@@ -63,6 +64,18 @@ class BeerControllerTest {
                 .andExpect(jsonPath("$.updatedDate").exists());
         ;
     }
+
+
+    @Test
+    void getBeerByIdWillReturnNotFoundException() throws Exception {
+
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.empty());
+
+
+        mockMvc.perform(get(BeerController.BEER_PATH_ID, UUID.randomUUID()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
 
     @Test
     void listAllBeersReturnsListOfBeers() throws Exception {
@@ -103,7 +116,7 @@ class BeerControllerTest {
     @Test
     void updateBeerReturnsNoContent() throws Exception {
         Beer beer = beerServiceImpl.listAllBeers().get(0);
-        given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beer));
 
         mockMvc.perform(
                         put(BeerController.BEER_PATH_ID, beer.getId())
@@ -118,7 +131,7 @@ class BeerControllerTest {
     @Test
     void deleteBeerReturnsNoContent() throws Exception {
         Beer beer = beerServiceImpl.listAllBeers().get(0);
-        given(beerService.getBeerById(any(UUID.class))).willReturn(beer);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beer));
 
         mockMvc.perform(delete(BeerController.BEER_PATH_ID, beer.getId()))
                 .andExpect(status().isNoContent());
