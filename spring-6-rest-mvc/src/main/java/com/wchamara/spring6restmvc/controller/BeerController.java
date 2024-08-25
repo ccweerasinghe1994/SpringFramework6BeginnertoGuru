@@ -2,12 +2,12 @@ package com.wchamara.spring6restmvc.controller;
 
 import com.wchamara.spring6restmvc.model.BeerDTO;
 import com.wchamara.spring6restmvc.service.BeerService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public class BeerController {
     }
 
     @PostMapping(BEER_PATH)
-    public ResponseEntity saveNewBeer(@Valid @RequestBody BeerDTO beerDTO) {
+    public ResponseEntity saveNewBeer(@Validated @RequestBody BeerDTO beerDTO) {
         log.debug("saveNewBeer() called in BeerController with beer: {}", beerDTO);
         BeerDTO savedBeerDTO = beerService.saveNewBeer(beerDTO);
         HttpHeaders headers = new HttpHeaders();
@@ -46,7 +46,7 @@ public class BeerController {
     }
 
     @PutMapping(BEER_PATH_ID)
-    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @RequestBody BeerDTO beerDTO) {
+    public ResponseEntity updateBeer(@PathVariable("id") UUID id, @Validated @RequestBody BeerDTO beerDTO) {
         log.debug("updateBeer() called in BeerController with id: {} and beer: {}", id, beerDTO);
         if (beerService.updateBeer(id, beerDTO).isEmpty()) {
             throw new NotFoundException();
@@ -69,6 +69,10 @@ public class BeerController {
     @PatchMapping(BEER_PATH_ID)
     public ResponseEntity patchBeer(@PathVariable("id") UUID id, @RequestBody BeerDTO beerDTO) {
         log.debug("patchBeer() called in BeerController with id: {} and beer: {}", id, beerDTO);
+
+        if (beerService.getBeerById(id).isEmpty()) {
+            throw new NotFoundException();
+        }
         beerService.patchBeer(id, beerDTO);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }

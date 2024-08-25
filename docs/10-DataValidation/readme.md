@@ -646,6 +646,625 @@ class BeerRepositoryTest {
 
 
 ## 008 Database Constraint Validation
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Beer {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(length = 36, columnDefinition = "varchar", updatable = false, nullable = false)
+    private UUID id;
+    @Version
+    private Integer version;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 50)
+    private String beerName;
+
+    @NotNull
+    private BeerStyle beerStyle;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    private String upc;
+    private Integer quantityOnHand;
+
+    @NotNull
+    private BigDecimal price;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+}
+
+```
+
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@DataJpaTest
+class BeerRepositoryTest {
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    @Test
+    void saveBeer() {
+
+        Beer budweiser1 = Beer.builder().
+                beerName("Budweiser")
+                .upc("123456789")
+                .beerStyle(BeerStyle.ALE)
+                .price(BigDecimal.valueOf(12.99))
+                .build();
+        Beer savedBudweiser = beerRepository.save(budweiser1);
+        beerRepository.flush();
+        assertThat(savedBudweiser).isNotNull();
+        assertThat(savedBudweiser.getBeerName()).isEqualTo("Budweiser");
+        assertThat(savedBudweiser.getId()).isNotNull();
+    }
+
+    @Test
+    void saveBeerNameTooLong() {
+        assertThrows(ConstraintViolationException.class, () -> {
+            Beer budweiser1 = Beer.builder().
+                    beerName("Budweiser123456789Budweiser123456789Budweiser123456789Budweiser123456789Budweiser123456789Budweiser123456789Budweiser123456789Budweiser123456789")
+                    .upc("123456789")
+                    .beerStyle(BeerStyle.ALE)
+                    .price(BigDecimal.valueOf(12.99))
+                    .build();
+            Beer savedBudweiser = beerRepository.save(budweiser1);
+            beerRepository.flush();
+        });
+
+
+    }
+}
+```
+
+### Benefits of Doing Validation in Entity Classes
+
+In a Spring Boot application, placing validation annotations directly in your entity classes, like the `Beer` entity in your example, offers several benefits:
+
+#### 1. **Consistency Across Layers**
+
+When validation is defined at the entity level, it ensures that the constraints are applied consistently across all layers of the application, whether you're working with HTTP requests, service methods, or directly interacting with the database.
+
+- **Example**: If a `Beer` entity must have a `beerName` that is not null or blank, this rule is enforced no matter where the entity is used or persisted. This consistency prevents errors that might arise from forgetting to validate data in different parts of the application.
+
+#### 2. **Centralized Validation Rules**
+
+By placing validation annotations on entity classes, you centralize the validation rules, making your codebase easier to maintain. All validation rules related to an entity are located in one place, reducing the risk of discrepancies and making it easier to update validation logic.
+
+- **Example**: If the requirement for `beerName` or `price` changes, you only need to update the entity class rather than updating validation logic scattered across controllers, services, or repositories.
+
+#### 3. **Integration with ORM**
+
+When using an ORM like Hibernate (which is commonly used in Spring applications), validation annotations can work hand-in-hand with the persistence layer. This ensures that entities conform to the validation rules before being persisted to the database, which helps maintain data integrity.
+
+- **Example**: Before a `Beer` entity is saved to the database, Hibernate will check that `beerName`, `beerStyle`, `upc`, and `price` meet the defined constraints, preventing invalid data from being persisted.
+
+#### 4. **Automatic Validation**
+
+Spring Boot, combined with Hibernate Validator, automatically validates entity fields whenever entities are used as input in a controller (e.g., when handling form submissions). This reduces boilerplate code and ensures that entities are always in a valid state when processed by the application.
+
+- **Example**: When a `Beer` entity is created or updated via a REST API, Spring automatically validates the fields based on the annotations, and if the validation fails, it returns an appropriate error response without any additional code.
+
+#### 5. **Improved Code Quality**
+
+Using validation annotations in entity classes helps to ensure that the domain model adheres to business rules, improving the overall quality and robustness of your application. It also helps catch potential errors early in the development process.
+
+- **Example**: Suppose a developer accidentally tries to persist a `Beer` entity without setting a `price`. The validation annotations will prevent this mistake, helping to avoid runtime errors or data integrity issues later on.
+
+#### 6. **Reduced Redundancy**
+
+Without entity-level validation, you'd likely have to replicate the same validation logic in multiple places (e.g., in controllers, services, and repositories), which leads to redundant code and increases the chance of bugs. Entity-level validation eliminates this redundancy.
+
+- **Example**: The rules for a valid `Beer` are defined once in the `Beer` entity class, and those rules apply universally, reducing the need for repetitive checks.
+
+### Example of Validation in Use
+
+In the `Beer` entity:
+
+```java
+@NotNull
+@NotBlank
+private String beerName;
+
+@NotNull
+private BeerStyle beerStyle;
+
+@NotNull
+@NotBlank
+private String upc;
+
+@NotNull
+private BigDecimal price;
+```
+
+These annotations ensure:
+- `beerName` and `upc` cannot be null or blank.
+- `beerStyle` and `price` cannot be null.
+
+If any of these conditions are not met, Spring will automatically return a validation error when the entity is being used (e.g., in an API request), thus preventing invalid data from being processed or persisted.
+
+### Summary
+
+Placing validation directly in entity classes in a Spring Boot application provides a centralized, consistent, and automated way to enforce business rules, ensuring that data is validated at every level of the application. This approach reduces redundancy, improves maintainability, and helps maintain data integrity across the system.
+
+
+### Database Constraint Validation in Spring Boot
+
+Database constraint validation in Spring Boot refers to the enforcement of certain rules at the database level to ensure data integrity and consistency. These constraints are defined in the database schema and are automatically enforced whenever data is inserted, updated, or deleted. In Spring Boot, these constraints are often mapped and managed using JPA (Java Persistence API) annotations.
+
+### Common Types of Database Constraints
+
+1. **Primary Key Constraint**:
+   - Ensures that each record in a table has a unique identifier. In Spring Boot, this is typically defined using the `@Id` annotation in the entity class.
+   - Example:
+     ```java
+     @Id
+     @GeneratedValue(strategy = GenerationType.IDENTITY)
+     private Long id;
+     ```
+
+2. **Unique Constraint**:
+   - Ensures that all values in a column or a group of columns are unique across the table. This can be defined using the `@Column` annotation with the `unique` attribute or using the `@UniqueConstraint` annotation at the table level.
+   - Example:
+     ```java
+     @Column(unique = true)
+     private String email;
+     ```
+
+3. **Not Null Constraint**:
+   - Ensures that a column cannot have `NULL` values. This is commonly enforced using the `@NotNull` annotation in the entity class.
+   - Example:
+     ```java
+     @NotNull
+     private String name;
+     ```
+
+4. **Check Constraint**:
+   - Ensures that all values in a column satisfy a specific condition. Although this constraint is often enforced directly in the database, it can be mirrored in the entity class using validation annotations like `@Min`, `@Max`, or `@Pattern`.
+   - Example:
+     ```java
+     @Min(0)
+     private Integer age;
+     ```
+
+5. **Foreign Key Constraint**:
+   - Ensures referential integrity by linking the values in a column to the primary key in another table. In Spring Boot, this is managed using the `@ManyToOne`, `@OneToMany`, `@OneToOne`, and `@ManyToMany` annotations.
+   - Example:
+     ```java
+     @ManyToOne
+     @JoinColumn(name = "category_id", nullable = false)
+     private Category category;
+     ```
+
+### Enforcing Database Constraints in Spring Boot
+
+1. **Entity-Level Constraints**:
+   - Spring Boot leverages JPA and Hibernate to map these database constraints to Java objects. For example, the `@Column`, `@NotNull`, and `@UniqueConstraint` annotations on an entity class will be translated into the corresponding SQL constraints when the schema is generated.
+
+2. **Validation Annotations**:
+   - Annotations like `@NotNull`, `@Size`, `@Pattern`, and `@Email` in entity classes help ensure that data meets the specified criteria before it is even sent to the database. This is part of Bean Validation (JSR 380) and helps in preventing invalid data from being persisted.
+
+3. **Database Initialization**:
+   - When using Spring Boot, database constraints can be automatically created as part of the schema generation process. This is controlled by the `spring.jpa.hibernate.ddl-auto` property in the `application.properties` file. Setting this property to `update`, `create`, or `create-drop` will cause Hibernate to generate the appropriate DDL statements, including constraints, when the application starts.
+
+   ```properties
+   spring.jpa.hibernate.ddl-auto=update
+   ```
+
+4. **Handling Constraint Violations**:
+   - If a database constraint is violated during runtime (e.g., trying to insert a duplicate value into a unique column), the database will throw an exception, which Hibernate will translate into a `DataIntegrityViolationException` or a more specific exception.
+   - These exceptions can be handled globally using a `@ControllerAdvice` class to return meaningful error messages to the client.
+
+   ```java
+   @ControllerAdvice
+   public class GlobalExceptionHandler {
+
+       @ExceptionHandler(DataIntegrityViolationException.class)
+       public ResponseEntity<String> handleDatabaseConstraintViolation(DataIntegrityViolationException ex) {
+           return new ResponseEntity<>("Database constraint violation: " + ex.getMessage(), HttpStatus.CONFLICT);
+       }
+   }
+   ```
+
+### Benefits of Database Constraint Validation
+
+1. **Data Integrity**: Ensures that the data stored in the database remains accurate and consistent according to business rules.
+2. **Error Prevention**: Prevents invalid data from being persisted, thereby avoiding potential issues in the application logic or data processing.
+3. **Security**: By enforcing constraints at the database level, it helps in preventing SQL injection attacks and other malicious inputs.
+4. **Centralized Validation**: While application-level validation is useful, database constraints provide an additional layer of protection, ensuring that data remains valid even if it bypasses application logic (e.g., direct database access).
+
+### Conclusion
+
+Database constraint validation in Spring Boot ensures that data integrity and consistency are maintained at all times. It works in tandem with application-level validation to provide a robust system for managing and enforcing business rules on the data being processed and stored in the database. By leveraging JPA and Hibernate, Spring Boot seamlessly integrates these constraints into the development process, simplifying the task of ensuring data validity across the application.
 ## 009 Controller Testing with JPA
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.mapper.BeerMapper;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+@Service
+@Primary
+@RequiredArgsConstructor
+public class BeerServiceImplJPA implements BeerService {
+
+    private final BeerRepository beerRepository;
+
+    private final BeerMapper beerMapper;
+
+    @Override
+    public Optional<BeerDTO> getBeerById(UUID id) {
+        return Optional.ofNullable(beerMapper.beerToBeerDto(beerRepository.findById(id).orElse(null)));
+    }
+
+    @Override
+    public List<BeerDTO> listAllBeers() {
+        return beerRepository.findAll().stream().map(beerMapper::beerToBeerDto).toList();
+    }
+
+    @Override
+    public BeerDTO saveNewBeer(BeerDTO beerDTO) {
+        Beer savedBeer = beerRepository.save(beerMapper.beerDtoToBeer(beerDTO));
+        return beerMapper.beerToBeerDto(savedBeer);
+    }
+
+    @Override
+    public Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO) {
+        AtomicReference<Optional<BeerDTO>> beerOptional = new AtomicReference<>();
+        beerRepository.findById(id).ifPresentOrElse(beer -> {
+            beer.setBeerName(beerDTO.getBeerName());
+            beer.setBeerStyle(beerDTO.getBeerStyle());
+            beer.setPrice(beerDTO.getPrice());
+            beer.setQuantityOnHand(beerDTO.getQuantityOnHand());
+
+            beerOptional.set(Optional.of(beerMapper.beerToBeerDto(beerRepository.save(beer))));
+
+        }, () -> {
+            beerOptional.set(Optional.empty());
+        });
+
+        return beerOptional.get();
+    }
+
+    @Override
+    public void deleteBeer(UUID id) {
+        beerRepository.deleteById(id);
+    }
+
+    @Override
+    public Optional<BeerDTO> patchBeer(UUID beerId, BeerDTO beerDTO) {
+        AtomicReference<Optional<BeerDTO>> atomicReference = new AtomicReference<>();
+
+        beerRepository.findById(beerId).ifPresentOrElse(foundBeer -> {
+            if (StringUtils.hasText(beerDTO.getBeerName())) {
+                foundBeer.setBeerName(beerDTO.getBeerName());
+            }
+            if (beerDTO.getBeerStyle() != null) {
+                foundBeer.setBeerStyle(beerDTO.getBeerStyle());
+            }
+            if (StringUtils.hasText(beerDTO.getUpc())) {
+                foundBeer.setUpc(beerDTO.getUpc());
+            }
+            if (beerDTO.getPrice() != null) {
+                foundBeer.setPrice(beerDTO.getPrice());
+            }
+            if (beerDTO.getQuantityOnHand() != null) {
+                foundBeer.setQuantityOnHand(beerDTO.getQuantityOnHand());
+            }
+            atomicReference.set(Optional.of(beerMapper
+                    .beerToBeerDto(beerRepository.save(foundBeer))));
+        }, () -> {
+            atomicReference.set(Optional.empty());
+        });
+
+        return atomicReference.get();
+    }
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+class BeerControllerIT {
+
+    @Autowired
+    BeerController beerController;
+    @Autowired
+    ObjectMapper objectMapper;
+    MockMvc mockMvc;
+    @Autowired
+    WebApplicationContext webApplicationContext;
+    @Autowired
+    private BeerRepository beerRepository;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+
+    @Test
+    void testListAllBeers() {
+        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+
+        assertEquals(3, beerDTOS.size());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testEmptyListBeers() {
+        beerRepository.deleteAll();
+        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+        assertThat(beerDTOS.size()).isEqualTo(0);
+    }
+
+    @Test
+    void getBeerById() {
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        assertThat(beerDTO).isNotNull();
+    }
+
+    @Test
+    void beerByIdNotFound() {
+        assertThrows(NotFoundException.class, () -> beerController.getBeerById(UUID.randomUUID()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testNewBeerSuccess() {
+
+        BeerDTO newBeer1 = BeerDTO.builder().beerName("New Beer").build();
+        ResponseEntity responseEntity = beerController.saveNewBeer(newBeer1);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
+        assertThat(responseEntity.getHeaders().get("Location")).isNotNull();
+
+        String[] location = responseEntity.getHeaders().getLocation().getPath().split("/");
+        UUID savedId = UUID.fromString(location[location.length - 1]);
+
+        Beer savedBeer = beerRepository.findById(savedId).get();
+        assertThat(savedBeer.getBeerName()).isEqualTo("New Beer");
+        assertThat(savedBeer.getId()).isEqualTo(savedId);
+
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testUpdateBeer() {
+
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        beerDTO.setBeerName("Updated Beer");
+        ResponseEntity responseEntity = beerController.updateBeer(beerDTO.getId(), beerDTO);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+
+        Beer updatedBeer = beerRepository.findById(beerDTO.getId()).get();
+        assertThat(updatedBeer.getBeerName()).isEqualTo("Updated Beer");
+    }
+
+    @Test
+    void testUpdateBeerNotFound() {
+        BeerDTO beerDTO = BeerDTO.builder().beerName("Updated Beer").build();
+        assertThrows(NotFoundException.class, () -> beerController.updateBeer(UUID.randomUUID(), beerDTO));
+    }
+
+    @Test
+    void testDeleteBeer() {
+        UUID id = beerRepository.findAll().get(0).getId();
+        ResponseEntity responseEntity = beerController.deleteBeer(id);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+        assertThat(beerRepository.findById(id)).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testDeleteBeerNotFound() {
+        assertThrows(NotFoundException.class, () -> beerController.deleteBeer(UUID.randomUUID()));
+    }
+
+
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        Beer beer = beerRepository.findAll().get(0);
+
+        Map<String, Object> beerMap = Map.of(
+                "beerName", "New Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer Name",
+                "beerStyle", "New Beer Style",
+                "price", 12.99,
+                "quantityOnHand", 100
+        );
+
+
+        mockMvc.perform(
+                        patch(BeerController.BEER_PATH_ID, beer.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerMap))
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+
+}
+```
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Beer {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(length = 36, columnDefinition = "varchar", updatable = false, nullable = false)
+    private UUID id;
+    @Version
+    private Integer version;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 50)
+    @Column(length = 50)
+    private String beerName;
+
+    @NotNull
+    private BeerStyle beerStyle;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    private String upc;
+    private Integer quantityOnHand;
+
+    @NotNull
+    private BigDecimal price;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+}
+
+```
+
 ## 010 JPA Validation Error Handler
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.util.List;
+import java.util.Map;
+
+@ControllerAdvice
+public class CustomErrorController {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity handleBindErrors(MethodArgumentNotValidException errors) {
+
+        List errorsList = errors.getFieldErrors().stream().map(fieldError -> {
+            Map<String, String> errorMap = Map.of(
+                    "field", fieldError.getField(),
+                    "message", fieldError.getDefaultMessage());
+
+            return errorMap;
+        }).toList();
+
+        return ResponseEntity.badRequest().body(errorsList);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    ResponseEntity handleJPAErrors(Exception e) {
+        return ResponseEntity.badRequest().build();
+    }
+
+}
+
+```
+![alt text](image-17.png)
+
 ## 011 JPA Validation Error Message
+```java
+
+```
