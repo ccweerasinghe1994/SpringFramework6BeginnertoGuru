@@ -409,8 +409,123 @@ In Spring Boot, both `@Valid` and `@Validated` are used to trigger validation on
 - [Javax Validation Specification](https://beanvalidation.org/)
 ## 005 Custom Validation Handler
 
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class CustomErrorController {
 
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity handleBindErrors(MethodArgumentNotValidException errors) {
+        return ResponseEntity.badRequest().body(errors.getBindingResult().getFieldError());
+    }
+
+}
+
+```
+
+```java
+    @Test
+    void testCreateNewBeerNullBeerName() throws Exception {
+        BeerDTO beerDTO = BeerDTO.builder().build();
+
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers().get(1));
+
+        ResultActions resultActions = mockMvc.perform(
+                        post(BeerController.BEER_PATH)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isBadRequest());
+
+        System.out.println(resultActions.andReturn().getResponse().getContentAsString());
+
+    }
+```
+
+```json 
+{
+  "codes": [
+    "NotNull.beerDTO.beerName",
+    "NotNull.beerName",
+    "NotNull.java.lang.String",
+    "NotNull"
+  ],
+  "arguments": [
+    {
+      "codes": [
+        "beerDTO.beerName",
+        "beerName"
+      ],
+      "arguments": null,
+      "defaultMessage": "beerName",
+      "code": "beerName"
+    }
+  ],
+  "defaultMessage": "must not be null",
+  "objectName": "beerDTO",
+  "field": "beerName",
+  "rejectedValue": null,
+  "bindingFailure": false,
+  "code": "NotNull"
+}
+```
+
+The code snippet you've provided is a Spring Boot controller advice class that handles specific types of exceptions globally across the application. Here's a breakdown of what each part of the code does:
+
+### 1. `@ControllerAdvice` Annotation
+
+- **Purpose**: The `@ControllerAdvice` annotation is used to define a global exception handler that applies to all controllers in the Spring application. It allows you to centralize your exception handling logic instead of repeating it in each controller.
+
+- **Use Case**: When an exception occurs in any controller, Spring will check if there is a handler for that specific exception type in the `@ControllerAdvice` annotated class. If it finds one, it will execute that method to handle the exception.
+
+### 2. `@ExceptionHandler(MethodArgumentNotValidException.class)`
+
+- **Purpose**: The `@ExceptionHandler` annotation is used to specify the type of exception that the method will handle. In this case, the method is designed to handle `MethodArgumentNotValidException`.
+
+- **`MethodArgumentNotValidException`**: This exception is thrown when a method argument annotated with `@Valid` fails validation. It usually occurs when a request body or request parameter does not meet the validation constraints defined in a DTO (Data Transfer Object) or entity class.
+
+### 3. `ResponseEntity handleBindErrors(MethodArgumentNotValidException errors)`
+
+- **Purpose**: This method is the actual exception handler. When a `MethodArgumentNotValidException` is thrown, Spring calls this method.
+
+- **Parameters**: 
+  - `MethodArgumentNotValidException errors`: This parameter contains the details of the validation errors that caused the exception. The `errors.getBindingResult()` method returns the `BindingResult` object that contains all the validation errors.
+
+- **Return Type**: 
+  - `ResponseEntity`: This is a Spring type that represents the entire HTTP response, including status code, headers, and body. It allows you to fully customize the response returned to the client.
+
+### 4. `ResponseEntity.badRequest().body(errors.getBindingResult().getFieldError())`
+
+- **Purpose**: This line constructs the HTTP response that will be sent back to the client.
+  
+- **`ResponseEntity.badRequest()`**: This method sets the HTTP status code to 400 Bad Request, indicating that the request could not be processed due to client-side errors (in this case, validation errors).
+
+- **`errors.getBindingResult().getFieldError()`**: This retrieves the first field error from the `BindingResult` object. The field error contains details about which field failed validation, the rejected value, and the default error message.
+
+- **Response**: The response body will contain information about the first field that failed validation, which might include the field name, the rejected value, and the error message.
+
+### Example Scenario
+
+Suppose you have a user registration form where the `email` field is required and should follow a valid email format. If the user submits an invalid email address, the `MethodArgumentNotValidException` will be thrown because the validation on the `email` field fails.
+
+With the `CustomErrorController` in place:
+
+- The exception will be caught by `handleBindErrors`.
+- A 400 Bad Request response will be sent to the client.
+- The response body will contain details about the validation error, specifically the first error encountered.
+
+### Conclusion
+
+This approach helps in centralizing and customizing the way validation errors are handled in a Spring Boot application. It ensures that all validation errors across the application are handled consistently and that meaningful error messages are returned to the client, improving the overall robustness and user experience of the application.
 
 ## 006 Custom Error Body
 ## 007 JPA Validation

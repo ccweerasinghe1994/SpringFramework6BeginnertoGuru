@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -120,13 +121,15 @@ class BeerControllerTest {
 
         given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers().get(1));
 
-        mockMvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                         post(BeerController.BEER_PATH)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerDTO))
                 )
                 .andExpect(status().isBadRequest());
+
+        System.out.println(resultActions.andReturn().getResponse().getContentAsString());
 
     }
 
