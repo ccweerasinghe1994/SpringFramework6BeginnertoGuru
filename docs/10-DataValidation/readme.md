@@ -1266,5 +1266,81 @@ public class CustomErrorController {
 
 ## 011 JPA Validation Error Message
 ```java
+package com.wchamara.spring6restmvc.controller;
+
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.util.List;
+import java.util.Map;
+
+@ControllerAdvice
+public class CustomErrorController {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity handleBindErrors(MethodArgumentNotValidException errors) {
+
+        List errorsList = errors.getFieldErrors().stream().map(fieldError -> {
+            Map<String, String> errorMap = Map.of(
+                    "field", fieldError.getField(),
+                    "message", fieldError.getDefaultMessage());
+
+            return errorMap;
+        }).toList();
+
+        return ResponseEntity.badRequest().body(errorsList);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    ResponseEntity handleJPAErrors(TransactionSystemException exception) {
+
+        ResponseEntity.BodyBuilder response = ResponseEntity.badRequest();
+
+        if (exception.getCause().getCause() instanceof ConstraintViolationException) {
+            ConstraintViolationException constraintViolationException = (ConstraintViolationException) exception.getCause().getCause();
+
+            List errorsList = constraintViolationException.getConstraintViolations().stream().map(constraintViolation -> {
+                Map<String, String> errorMap = Map.of(
+                        constraintViolation.getPropertyPath().toString(), constraintViolation.getMessage());
+                return errorMap;
+            }).toList();
+            return response.body(errorsList);
+        }
+        return response.build();
+    }
+
+}
 
 ```
+
+```java
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        Beer beer = beerRepository.findAll().get(0);
+
+        Map<String, Object> beerMap = Map.of(
+                "beerName", "New Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer Name",
+                "beerStyle", "New Beer Style",
+                "price", 12.99,
+                "quantityOnHand", 100
+        );
+
+
+        MvcResult mvcResult = mockMvc.perform(
+                        patch(BeerController.BEER_PATH_ID, beer.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerMap))
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString());
+    }
+```
+
+![alt text](image-18.png)
