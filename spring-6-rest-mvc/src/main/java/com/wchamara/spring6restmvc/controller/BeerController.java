@@ -2,6 +2,7 @@ package com.wchamara.spring6restmvc.controller;
 
 import com.wchamara.spring6restmvc.model.BeerDTO;
 import com.wchamara.spring6restmvc.service.BeerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -35,7 +36,7 @@ public class BeerController {
     }
 
     @PostMapping(BEER_PATH)
-    public ResponseEntity saveNewBeer(@RequestBody BeerDTO beerDTO) {
+    public ResponseEntity saveNewBeer(@Valid @RequestBody BeerDTO beerDTO) {
         log.debug("saveNewBeer() called in BeerController with beer: {}", beerDTO);
         BeerDTO savedBeerDTO = beerService.saveNewBeer(beerDTO);
         HttpHeaders headers = new HttpHeaders();
@@ -56,6 +57,11 @@ public class BeerController {
     @DeleteMapping(BEER_PATH_ID)
     public ResponseEntity deleteBeer(@PathVariable("id") UUID id) {
         log.debug("deleteBeer() called in BeerController with id: {}", id);
+
+        if (beerService.getBeerById(id).isEmpty()) {
+            throw new NotFoundException();
+        }
+
         beerService.deleteBeer(id);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
