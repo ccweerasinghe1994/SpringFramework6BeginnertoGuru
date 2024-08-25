@@ -18,7 +18,7 @@ class BeerRepositoryTest {
 
         Beer budweiser1 = Beer.builder().beerName("Budweiser").build();
         Beer savedBudweiser = beerRepository.save(budweiser1);
-
+        beerRepository.flush();
         assertThat(savedBudweiser).isNotNull();
         assertThat(savedBudweiser.getBeerName()).isEqualTo("Budweiser");
         assertThat(savedBudweiser.getId()).isNotNull();

@@ -528,7 +528,123 @@ With the `CustomErrorController` in place:
 This approach helps in centralizing and customizing the way validation errors are handled in a Spring Boot application. It ensures that all validation errors across the application are handled consistently and that meaningful error messages are returned to the client, improving the overall robustness and user experience of the application.
 
 ## 006 Custom Error Body
+
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class CustomErrorController {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity handleBindErrors(MethodArgumentNotValidException errors) {
+
+        List errorsList = errors.getFieldErrors().stream().map(fieldError -> {
+            Map<String, String> errorMap = Map.of(
+                    "field", fieldError.getField(),
+                    "message", fieldError.getDefaultMessage());
+
+            return errorMap;
+        }).toList();
+
+        return ResponseEntity.badRequest().body(errorsList);
+    }
+
+}
+
+```
+
+![alt text](image-16.png)
+
 ## 007 JPA Validation
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Beer {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(length = 36, columnDefinition = "varchar", updatable = false, nullable = false)
+    private UUID id;
+    @Version
+    private Integer version;
+
+    @NotNull
+    @NotBlank
+    private String beerName;
+
+    @NotNull
+    private BeerStyle beerStyle;
+
+    @NotNull
+    @NotBlank
+    private String upc;
+    private Integer quantityOnHand;
+
+    @NotNull
+    private BigDecimal price;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+}
+
+```
+
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+@DataJpaTest
+class BeerRepositoryTest {
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    @Test
+    void saveBeer() {
+
+        Beer budweiser1 = Beer.builder().beerName("Budweiser").build();
+        Beer savedBudweiser = beerRepository.save(budweiser1);
+        beerRepository.flush();
+        assertThat(savedBudweiser).isNotNull();
+        assertThat(savedBudweiser.getBeerName()).isEqualTo("Budweiser");
+        assertThat(savedBudweiser.getId()).isNotNull();
+    }
+}
+```
+
+
 ## 008 Database Constraint Validation
 ## 009 Controller Testing with JPA
 ## 010 JPA Validation Error Handler
