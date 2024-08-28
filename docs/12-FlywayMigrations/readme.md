@@ -60,5 +60,31 @@ create table customer
 ![alt text](image-12.png)
 
 ## 005 Add Database Column
+
+add column email to customer table
+
+```java
+    @Column(length = 255)
+    private String email;
+```
+
+```sql
+alter table customer
+    add column email varchar(255);
+```
+![alt text](image-13.png)
+
+spring flyway documentation [here](https://docs.spring.io/spring-boot/how-to/data-initialization.html#howto.data-initialization.migration-tool.flyway)
+
 ## 006 Flyway Advanced Spring Boot Configuration
+
+
 ## 007 Fixing Integration Tests using H2
+default spring boot test database is H2
+```properties
+spring.flyway.enabled=false
+```
+
+```properties
+spring.flyway.enabled=true
+```
