@@ -25,7 +25,9 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -48,10 +50,25 @@ class BeerControllerIT {
 
 
     @Test
-    void testListAllBeers() {
-        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+    void getBeerByName() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(get(BeerController.BEER_PATH).queryParam("beerName", "IPA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(211));
+//                .andExpect(result -> {
+//                    String content = result.getResponse().getContentAsString();
+//                    List<BeerDTO> beerDTOS = objectMapper.readValue(content, List.class);
+//                    assertThat(beerDTOS.size()).isEqualTo(2);
+//                });
 
-        assertEquals(3, beerDTOS.size());
+    }
+
+
+    @Test
+    void testListAllBeers() {
+        List<BeerDTO> beerDTOS = beerController.listAllBeers(null);
+
+        assertEquals(2413, beerDTOS.size());
     }
 
     @Test
@@ -59,7 +76,7 @@ class BeerControllerIT {
     @Rollback
     void testEmptyListBeers() {
         beerRepository.deleteAll();
-        List<BeerDTO> beerDTOS = beerController.listAllBeers();
+        List<BeerDTO> beerDTOS = beerController.listAllBeers(null);
         assertThat(beerDTOS.size()).isEqualTo(0);
     }
 

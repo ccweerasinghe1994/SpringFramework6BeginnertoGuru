@@ -30,7 +30,7 @@ public class BeerController {
     }
 
     @GetMapping(BEER_PATH)
-    public List<BeerDTO> listAllBeers() {
+    public List<BeerDTO> listAllBeers(@RequestParam(required = false) String beerName) {
         log.debug("listAllBeers() called in BeerController");
         return beerService.listAllBeers();
     }
