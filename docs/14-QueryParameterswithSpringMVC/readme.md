@@ -157,6 +157,257 @@ Query parameters in Spring MVC allow you to pass data to your controller methods
 ```
 
 ## 005 Update Service to Accept Query Parameter
+```java
+    @GetMapping(BEER_PATH)
+    public List<BeerDTO> listAllBeers(@RequestParam(required = false) String beerName) {
+        log.debug("listAllBeers() called in BeerController");
+        return beerService.listAllBeers(beerName);
+    }
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BeerService {
+    Optional<BeerDTO> getBeerById(UUID id);
+
+    List<BeerDTO> listAllBeers(String beerName);
+
+    BeerDTO saveNewBeer(BeerDTO beerDTO);
+
+    Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO);
+
+    void deleteBeer(UUID id);
+
+    Optional<BeerDTO> patchBeer(UUID id, BeerDTO beerDTO);
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+public class BeerServiceImpl implements BeerService {
+
+    private Map<UUID, BeerDTO> beerMap = new HashMap<>();
+
+    public BeerServiceImpl() {
+        BeerDTO beerDTO1 = BeerDTO.builder()
+                .id(UUID.fromString("60501fcd-487e-4d83-8c67-3001482e35a2"))
+                .version(1)
+                .beerName("Galaxy Cat")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123456")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        BeerDTO beerDTO2 = BeerDTO.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Dog")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123457")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        BeerDTO beerDTO3 = BeerDTO.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Fish")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("123458")
+                .price(BigDecimal.valueOf(12.95))
+                .quantityOnHand(200)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
+
+        beerMap.put(beerDTO1.getId(), beerDTO1);
+        beerMap.put(beerDTO2.getId(), beerDTO2);
+        beerMap.put(beerDTO3.getId(), beerDTO3);
+
+
+    }
+
+
+    @Override
+    public List<BeerDTO> listAllBeers(String beerName) {
+        return new ArrayList<>(beerMap.values());
+    }
+
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.mapper.BeerMapper;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+@Service
+@Primary
+@RequiredArgsConstructor
+public class BeerServiceImplJPA implements BeerService {
+
+    private final BeerRepository beerRepository;
+
+    private final BeerMapper beerMapper;
+
+    @Override
+    public List<BeerDTO> listAllBeers(String beerName) {
+        return beerRepository.findAll().stream().map(beerMapper::beerToBeerDto).toList();
+    }
+
+}
+
+```
+```java
+
+    @Test
+    void getBeerByIdReturnsBeer() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null).get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beerDTO));
+
+
+        mockMvc.perform(get(BeerController.BEER_PATH_ID, beerDTO.getId()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(beerDTO.getId().toString()))
+                .andExpect(jsonPath("$.beerName").value(beerDTO.getBeerName()))
+                .andExpect(jsonPath("$.beerStyle").value(beerDTO.getBeerStyle().toString()))
+                .andExpect(jsonPath("$.upc").value(beerDTO.getUpc()))
+                .andExpect(jsonPath("$.quantityOnHand").value(beerDTO.getQuantityOnHand()))
+                .andExpect(jsonPath("$.price").value(beerDTO.getPrice().toString()))
+                .andExpect(jsonPath("$.createdDate").exists())
+                .andExpect(jsonPath("$.updatedDate").exists());
+        ;
+    }
+```
+```java
+    @Test
+    void saveNewBeerReturnsCreated() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null).get(0);
+        beerDTO.setId(null);
+        beerDTO.setVersion(null);
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers(null).get(1));
+
+        mockMvc.perform(
+                        post(BeerController.BEER_PATH)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+
+    }
+```
+```java
+    @Test
+    void testCreateNewBeerNullBeerName() throws Exception {
+        BeerDTO beerDTO = BeerDTO.builder().build();
+
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers(null).get(1));
+
+        ResultActions resultActions = mockMvc.perform(
+                        post(BeerController.BEER_PATH)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isBadRequest());
+
+        System.out.println(resultActions.andReturn().getResponse().getContentAsString());
+
+    }
+```
+```java
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null).get(0);
+        given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beerDTO));
+
+
+        mockMvc.perform(
+                        put(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isNoContent());
+        verify(beerService).updateBeer(any(UUID.class), any(BeerDTO.class));
+    }
+```
+```java
+
+    @Test
+    void deleteBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null).get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beerDTO));
+
+        mockMvc.perform(delete(BeerController.BEER_PATH_ID, beerDTO.getId()))
+                .andExpect(status().isNoContent());
+
+        verify(beerService).deleteBeer(uuidArgumentCaptor.capture());
+
+        assertThat(uuidArgumentCaptor.getValue()).isEqualTo(beerDTO.getId());
+    }
+```
+```java
+    @Test
+    void patchBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null).get(0);
+
+        Map<String, Object> beerMap = new HashMap<>();
+
+        beerMap.put("beerName", "New Beer Name");
+
+        mockMvc.perform(
+                        patch(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerMap))
+                )
+                .andExpect(status().isNotFound());
+
+//        verify(beerService).patchBeer(uuidArgumentCaptor.capture(), beerArgumentCaptor.capture());
+//        assertThat(uuidArgumentCaptor.getValue()).isEqualTo(beerDTO.getId());
+//        assertThat(beerArgumentCaptor.getValue().getBeerName()).isEqualTo("New Beer Name");
+
+    }
+```
 ## 006 Refactor Service with Conditional Logic
 ## 007 Find By Name with Spring Data JPA
 ## 008 Complete Implementation
