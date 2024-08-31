@@ -5,13 +5,13 @@ import com.wchamara.spring6restmvc.model.BeerStyle;
 import com.wchamara.spring6restmvc.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class BeerController {
     }
 
     @GetMapping(BEER_PATH)
-    public List<BeerDTO> listAllBeers(
+    public Page<BeerDTO> listAllBeers(
             @RequestParam(required = false) String beerName,
             @RequestParam(required = false) boolean showInventory,
             @RequestParam(required = false) BeerStyle beerStyle,
@@ -39,7 +39,7 @@ public class BeerController {
             @RequestParam(required = false) Integer pageNumber
     ) {
         log.debug("listAllBeers() called in BeerController");
-        return beerService.listAllBeers(beerName, showInventory, beerStyle, 1, 25);
+        return beerService.listAllBeers(beerName, showInventory, beerStyle, pageNumber, pageSize);
     }
 
     @PostMapping(BEER_PATH)

@@ -2,15 +2,15 @@ package com.wchamara.spring6restmvc.service;
 
 import com.wchamara.spring6restmvc.model.BeerDTO;
 import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface BeerService {
     Optional<BeerDTO> getBeerById(UUID id);
 
-    List<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle, Integer pageNumber, Integer pageSize);
+    Page<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle, Integer pageNumber, Integer pageSize);
 
     BeerDTO saveNewBeer(BeerDTO beerDTO);
 

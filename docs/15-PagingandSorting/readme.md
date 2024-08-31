@@ -26,7 +26,7 @@
             @RequestParam(required = false) Integer pageNumber
     ) {
         log.debug("listAllBeers() called in BeerController");
-        return beerService.listAllBeers(beerName, showInventory, beerStyle, 1, 25);
+        return beerService.listAllBeers(beerName, showInventory, beerStyle, pageSize, pageNumber);
     }
 ```
 
@@ -145,6 +145,92 @@ public class BeerServiceImplJPA implements BeerService {
 
 ## 006 Refactor Spring Data JPA Repositories
 
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface BeerRepository extends JpaRepository<Beer, UUID> {
+
+    Page<Beer> findAllByBeerNameIsLikeIgnoreCase(String beerName, Pageable pageable);
+
+    Page<Beer> findAllByBeerNameIsLikeIgnoreCaseAndBeerStyle(String beerName, BeerStyle beerStyle, Pageable pageable);
+
+    Page<Beer> findAllByBeerStyle(BeerStyle beerStyle, Pageable pageable);
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.service;
+
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import org.springframework.data.domain.Page;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BeerService {
+    Optional<BeerDTO> getBeerById(UUID id);
+
+    Page<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle, Integer pageNumber, Integer pageSize);
+
+    BeerDTO saveNewBeer(BeerDTO beerDTO);
+
+    Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDTO);
+
+    void deleteBeer(UUID id);
+
+    Optional<BeerDTO> patchBeer(UUID id, BeerDTO beerDTO);
+}
+
+```
+```java
+    @Override
+    public Page<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle, Integer pageNumber, Integer pageSize) {
+        Page<Beer> beerPage;
+
+        PageRequest pageRequest = buildPageRequest(pageNumber, pageSize);
+
+        if (StringUtils.hasText(beerName) && beerStyle == null) {
+            beerPage = listBeersByName(beerName, pageRequest);
+        } else if (StringUtils.hasText(beerName) && beerStyle != null) {
+            beerPage = listBeerNameAndStyle(beerName, beerStyle, pageRequest);
+        } else if (!StringUtils.hasText(beerName) && beerStyle != null) {
+            beerPage = getAllByBeerStyle(beerStyle, pageRequest);
+        } else {
+            beerPage = beerRepository.findAll(pageRequest);
+        }
+
+        if (showInventory != null && !showInventory) {
+            beerPage.forEach(beer -> beer.setQuantityOnHand(null));
+        }
+
+        return beerPage.map(beerMapper::beerToBeerDto);
+    }
+
+    private Page<Beer> getAllByBeerStyle(BeerStyle beerStyle, PageRequest pageRequest) {
+        return beerRepository.findAllByBeerStyle(beerStyle, pageRequest);
+    }
+
+    private Page<Beer> listBeerNameAndStyle(String beerName, BeerStyle beerStyle, PageRequest pageRequest) {
+        return beerRepository.findAllByBeerNameIsLikeIgnoreCaseAndBeerStyle("%" + beerName + "%", beerStyle, pageRequest);
+    }
+
+    private Page<Beer> listBeersByName(String beerName, PageRequest pageRequest) {
+        return beerRepository.findAllByBeerNameIsLikeIgnoreCase("%" + beerName + "%", pageRequest);
+    }
+
+```
+```java
+
+```
 ```java
 
 ```

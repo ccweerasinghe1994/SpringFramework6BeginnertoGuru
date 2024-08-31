@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,8 +62,8 @@ class BeerControllerIT {
                                 .queryParam("pageSize", "50")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(50))
-                .andExpect(jsonPath("$[0].quantityOnHand").isNotEmpty())
+                .andExpect(jsonPath("$.content.size()").value(50))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isNotEmpty())
         ;
     }
 
@@ -72,7 +72,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(get(BeerController.BEER_PATH).queryParam("beerName", "IPA"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(336));
+                .andExpect(jsonPath("$.content.size()").value(25));
 //                .andExpect(result -> {
 //                    String content = result.getResponse().getContentAsString();
 //                    List<BeerDTO> beerDTOS = objectMapper.readValue(content, List.class);
@@ -91,8 +91,8 @@ class BeerControllerIT {
                                 .queryParam("showInventory", "TRUE")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(310))
-                .andExpect(jsonPath("$[0].quantityOnHand").isNotEmpty())
+                .andExpect(jsonPath("$.content.size()").value(25))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isNotEmpty())
         ;
 
 
@@ -108,8 +108,8 @@ class BeerControllerIT {
                                 .queryParam("showInventory", "FALSE")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(310))
-                .andExpect(jsonPath("$[0].quantityOnHand").isEmpty())
+                .andExpect(jsonPath("$.content.size()").value(25))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isEmpty())
         ;
 
 
@@ -118,9 +118,9 @@ class BeerControllerIT {
 
     @Test
     void testListAllBeers() {
-        List<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
+        Page<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
 
-        assertEquals(2413, beerDTOS.size());
+        assertEquals(25, beerDTOS.getContent().size());
     }
 
     @Test
@@ -128,8 +128,8 @@ class BeerControllerIT {
     @Rollback
     void testEmptyListBeers() {
         beerRepository.deleteAll();
-        List<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
-        assertThat(beerDTOS.size()).isEqualTo(0);
+        Page<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
+        assertThat(beerDTOS.getContent().size()).isEqualTo(0);
     }
 
     @Test
