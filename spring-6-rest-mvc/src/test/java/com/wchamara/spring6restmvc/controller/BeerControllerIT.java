@@ -3,6 +3,7 @@ package com.wchamara.spring6restmvc.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wchamara.spring6restmvc.entities.Beer;
 import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
 import com.wchamara.spring6restmvc.repositories.BeerRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,19 +55,53 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(get(BeerController.BEER_PATH).queryParam("beerName", "IPA"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(211));
+                .andExpect(jsonPath("$.size()").value(336));
 //                .andExpect(result -> {
 //                    String content = result.getResponse().getContentAsString();
 //                    List<BeerDTO> beerDTOS = objectMapper.readValue(content, List.class);
-//                    assertThat(beerDTOS.size()).isEqualTo(2);
+//                    assertThat(beerDTOS.size()).isEqualTo(336);
 //                });
+
+    }
+
+    @Test
+    void getBeerByNameQueryParameter() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .queryParam("beerName", "IPA")
+                                .queryParam("beerStyle", BeerStyle.IPA.name())
+                                .queryParam("showInventory", "TRUE")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(310))
+                .andExpect(jsonPath("$[0].quantityOnHand").isNotEmpty())
+        ;
+
+
+    }
+
+    @Test
+    void getBeerByNameQueryParameterAndShowInventoryFalse() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .queryParam("beerName", "IPA")
+                                .queryParam("beerStyle", BeerStyle.IPA.name())
+                                .queryParam("showInventory", "FALSE")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(310))
+                .andExpect(jsonPath("$[0].quantityOnHand").isEmpty())
+        ;
+
 
     }
 
 
     @Test
     void testListAllBeers() {
-        List<BeerDTO> beerDTOS = beerController.listAllBeers(null);
+        List<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null);
 
         assertEquals(2413, beerDTOS.size());
     }
@@ -76,7 +111,7 @@ class BeerControllerIT {
     @Rollback
     void testEmptyListBeers() {
         beerRepository.deleteAll();
-        List<BeerDTO> beerDTOS = beerController.listAllBeers(null);
+        List<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null);
         assertThat(beerDTOS.size()).isEqualTo(0);
     }
 

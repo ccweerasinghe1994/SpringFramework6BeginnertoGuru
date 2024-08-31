@@ -1,6 +1,7 @@
 package com.wchamara.spring6restmvc.controller;
 
 import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
 import com.wchamara.spring6restmvc.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,9 @@ public class BeerController {
     }
 
     @GetMapping(BEER_PATH)
-    public List<BeerDTO> listAllBeers(@RequestParam(required = false) String beerName) {
+    public List<BeerDTO> listAllBeers(@RequestParam(required = false) String beerName, @RequestParam(required = false) boolean showInventory, @RequestParam(required = false) BeerStyle beerStyle) {
         log.debug("listAllBeers() called in BeerController");
-        return beerService.listAllBeers(beerName);
+        return beerService.listAllBeers(beerName, showInventory, beerStyle);
     }
 
     @PostMapping(BEER_PATH)

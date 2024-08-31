@@ -3,13 +3,13 @@ package com.wchamara.spring6restmvc.service;
 import com.wchamara.spring6restmvc.entities.Beer;
 import com.wchamara.spring6restmvc.mapper.BeerMapper;
 import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
 import com.wchamara.spring6restmvc.repositories.BeerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,20 +30,36 @@ public class BeerServiceImplJPA implements BeerService {
     }
 
     @Override
-    public List<BeerDTO> listAllBeers(String beerName) {
+    public List<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle) {
         List<Beer> beerList;
 
-        if (StringUtils.hasText(beerName)) {
+        if (StringUtils.hasText(beerName) && beerStyle == null) {
             beerList = listBeersByName(beerName);
+        } else if (StringUtils.hasText(beerName) && beerStyle != null) {
+            beerList = listBeerNameAndStyle(beerName, beerStyle);
+        } else if (!StringUtils.hasText(beerName) && beerStyle != null) {
+            beerList = getAllByBeerStyle(beerStyle);
         } else {
             beerList = beerRepository.findAll();
+        }
+
+        if (showInventory != null && !showInventory) {
+            beerList.forEach(beer -> beer.setQuantityOnHand(null));
         }
 
         return beerList.stream().map(beerMapper::beerToBeerDto).toList();
     }
 
+    private List<Beer> getAllByBeerStyle(BeerStyle beerStyle) {
+        return beerRepository.findAllByBeerStyle(beerStyle);
+    }
+
+    private List<Beer> listBeerNameAndStyle(String beerName, BeerStyle beerStyle) {
+        return beerRepository.findAllByBeerNameIsLikeIgnoreCaseAndBeerStyle("%" + beerName + "%", beerStyle);
+    }
+
     private List<Beer> listBeersByName(String beerName) {
-        return new ArrayList<>();
+        return beerRepository.findAllByBeerNameIsLikeIgnoreCase("%" + beerName + "%");
     }
 
     @Override
