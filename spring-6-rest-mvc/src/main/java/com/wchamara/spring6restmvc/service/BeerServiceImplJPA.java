@@ -7,6 +7,7 @@ import com.wchamara.spring6restmvc.model.BeerStyle;
 import com.wchamara.spring6restmvc.repositories.BeerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,9 +21,36 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class BeerServiceImplJPA implements BeerService {
 
+    private final static Integer DEFAULT_PAGE_NUMBER = 1;
+    private final static Integer DEFAULT_PAGE_SIZE = 25;
+
     private final BeerRepository beerRepository;
 
     private final BeerMapper beerMapper;
+
+    public PageRequest buildPageRequest(Integer pageNumber, Integer pageSize) {
+
+        int queryPageNumber;
+        int queryPageSize;
+
+        if (pageNumber != null && pageNumber > 0) {
+            queryPageNumber = pageNumber - 1;
+        } else {
+            queryPageNumber = DEFAULT_PAGE_NUMBER;
+        }
+
+        if (pageSize != null && pageSize > 0) {
+            if (pageSize > 100) {
+                queryPageSize = 100;
+            } else {
+                queryPageSize = pageSize;
+            }
+        } else {
+            queryPageSize = DEFAULT_PAGE_SIZE;
+        }
+        return PageRequest.of(queryPageNumber, queryPageSize);
+
+    }
 
     @Override
     public Optional<BeerDTO> getBeerById(UUID id) {
@@ -32,6 +60,8 @@ public class BeerServiceImplJPA implements BeerService {
     @Override
     public List<BeerDTO> listAllBeers(String beerName, Boolean showInventory, BeerStyle beerStyle, Integer pageNumber, Integer pageSize) {
         List<Beer> beerList;
+
+        PageRequest pageRequest = buildPageRequest(pageNumber, pageSize);
 
         if (StringUtils.hasText(beerName) && beerStyle == null) {
             beerList = listBeersByName(beerName);
