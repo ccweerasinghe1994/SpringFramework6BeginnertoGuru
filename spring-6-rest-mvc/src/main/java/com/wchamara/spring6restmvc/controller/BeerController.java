@@ -31,9 +31,15 @@ public class BeerController {
     }
 
     @GetMapping(BEER_PATH)
-    public List<BeerDTO> listAllBeers(@RequestParam(required = false) String beerName, @RequestParam(required = false) boolean showInventory, @RequestParam(required = false) BeerStyle beerStyle) {
+    public List<BeerDTO> listAllBeers(
+            @RequestParam(required = false) String beerName,
+            @RequestParam(required = false) boolean showInventory,
+            @RequestParam(required = false) BeerStyle beerStyle,
+            @RequestParam(required = false) Integer pageSize,
+            @RequestParam(required = false) Integer pageNumber
+    ) {
         log.debug("listAllBeers() called in BeerController");
-        return beerService.listAllBeers(beerName, showInventory, beerStyle);
+        return beerService.listAllBeers(beerName, showInventory, beerStyle, 1, 25);
     }
 
     @PostMapping(BEER_PATH)
