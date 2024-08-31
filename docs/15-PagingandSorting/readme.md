@@ -228,12 +228,7 @@ public interface BeerService {
     }
 
 ```
-```java
-
-```
-```java
-
-```
+[github full change details](https://github.com/ccweerasinghe1994/SpringFramework6BeginnertoGuru/commit/94ca49ef613ad31b864af6e12abc4b1b242c1a03)
 
 ## 007 Add Sort Parameter
 
