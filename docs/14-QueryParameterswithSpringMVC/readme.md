@@ -409,6 +409,24 @@ public class BeerServiceImplJPA implements BeerService {
     }
 ```
 ## 006 Refactor Service with Conditional Logic
+```java
+    @Override
+    public List<BeerDTO> listAllBeers(String beerName) {
+        List<Beer> beerList;
+
+        if (StringUtils.hasText(beerName)) {
+            beerList = listBeersByName(beerName);
+        } else {
+            beerList = beerRepository.findAll();
+        }
+
+        return beerList.stream().map(beerMapper::beerToBeerDto).toList();
+    }
+
+    private List<Beer> listBeersByName(String beerName) {
+        return new ArrayList<>();
+    }
+```
 ## 007 Find By Name with Spring Data JPA
 ## 008 Complete Implementation
 ## 009 Complete Search Functionality
