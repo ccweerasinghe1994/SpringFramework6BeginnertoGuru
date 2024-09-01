@@ -8,17 +8,17 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
-import java.util.Set;
+import java.sql.Timestamp;
 import java.util.UUID;
 
-@Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Customer {
+public class BeerOrder {
+
     @Id
     @GeneratedValue
     @UuidGenerator
@@ -26,19 +26,22 @@ public class Customer {
     @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(length = 255)
-    private String email;
-
     @Version
-    private Integer version;
-    private String name;
+    private Long version;
 
     @CreationTimestamp
-    private LocalDateTime createdDate;
+    @Column(updatable = false)
+    private Timestamp createdDate;
 
     @UpdateTimestamp
-    private LocalDateTime updateDate;
+    private Timestamp lastModifiedDate;
 
-    @OneToMany(mappedBy = "customer")
-    private Set<BeerOrder> beerOrders;
+    private String customerRef;
+
+    @ManyToOne
+    private Customer customer;
+
+    public boolean isNew() {
+        return this.id == null;
+    }
 }
