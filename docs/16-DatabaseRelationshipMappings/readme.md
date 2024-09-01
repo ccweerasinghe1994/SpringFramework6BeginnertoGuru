@@ -757,6 +757,165 @@ public void setCustomer(Customer customer) {
 This pattern is essential in ensuring that the relationships between entities are consistently managed in both directions, which is crucial when working with object-relational mapping (ORM) frameworks like JPA/Hibernate.
 
 ## 008 Many to Many
+
+```sql
+drop table if exists category;
+drop table if exists beer_category;
+
+create table category
+(
+    id                 varchar(36) not null primary key,
+    version            bigint      default null,
+    created_date       timestamp,
+    last_modified_date datetime(6) default null,
+    description        varchar(50)
+
+) engine = InnoDB;
+
+
+create table beer_category
+(
+    beer_id     varchar(36) not null,
+    category_id varchar(36) not null,
+    primary key (beer_id, category_id),
+    constraint pc_beer_id_fk foreign key (beer_id) references beer (id),
+    constraint pc_category_id_fk foreign key (category_id) references category (id)
+) engine = InnoDB;
+
+
+```
+
+This SQL script creates two tables (`category` and `beer_category`) in a relational database using the InnoDB storage engine. Let's break down each part of the script to understand what it does:
+
+### 1. **Dropping Existing Tables**
+```sql
+DROP TABLE IF EXISTS category;
+DROP TABLE IF EXISTS beer_category;
+```
+- These commands ensure that the `category` and `beer_category` tables are dropped if they already exist. This is done to avoid conflicts or errors when creating new versions of these tables.
+
+### 2. **Creating the `category` Table**
+```sql
+CREATE TABLE category
+(
+    id                 VARCHAR(36) NOT NULL PRIMARY KEY,
+    version            BIGINT      DEFAULT NULL,
+    created_date       TIMESTAMP,
+    last_modified_date DATETIME(6) DEFAULT NULL,
+    description        VARCHAR(50)
+) ENGINE = InnoDB;
+```
+- **Columns**:
+  - `id`: A `VARCHAR(36)` column that serves as the primary key for the table. The size `36` is typical for storing UUIDs, ensuring that each category has a unique identifier.
+  - `version`: A `BIGINT` column that might be used for versioning, allowing the tracking of changes to each category (e.g., optimistic locking).
+  - `created_date`: A `TIMESTAMP` column that records the date and time when the category was created.
+  - `last_modified_date`: A `DATETIME(6)` column that records the date and time when the category was last modified, with precision up to microseconds.
+  - `description`: A `VARCHAR(50)` column that stores a short description of the category (e.g., "Lager", "Ale", etc.).
+
+- **Primary Key**:
+  - `PRIMARY KEY (id)`: The `id` column is designated as the primary key, ensuring that each category has a unique identifier.
+
+- **Engine**:
+  - `ENGINE = InnoDB`: Specifies that the table uses the InnoDB storage engine, which supports transactions, foreign keys, and row-level locking.
+
+### 3. **Creating the `beer_category` Table**
+```sql
+CREATE TABLE beer_category
+(
+    beer_id     VARCHAR(36) NOT NULL,
+    category_id VARCHAR(36) NOT NULL,
+    PRIMARY KEY (beer_id, category_id),
+    CONSTRAINT pc_beer_id_fk FOREIGN KEY (beer_id) REFERENCES beer (id),
+    CONSTRAINT pc_category_id_fk FOREIGN KEY (category_id) REFERENCES category (id)
+) ENGINE = InnoDB;
+```
+- **Purpose**: 
+  - The `beer_category` table is a **junction table** (also known as a join table or associative entity) that implements a many-to-many relationship between the `beer` and `category` tables. Each record in this table links one beer to one category.
+
+- **Columns**:
+  - `beer_id`: A `VARCHAR(36)` column that stores the ID of a beer. This is a foreign key that references the `id` column in the `beer` table.
+  - `category_id`: A `VARCHAR(36)` column that stores the ID of a category. This is a foreign key that references the `id` column in the `category` table.
+
+- **Primary Key**:
+  - `PRIMARY KEY (beer_id, category_id)`: The combination of `beer_id` and `category_id` forms the primary key, ensuring that each beer-category pair is unique. This means a specific beer can only be linked to a specific category once.
+
+- **Foreign Key Constraints**:
+  - `CONSTRAINT pc_beer_id_fk FOREIGN KEY (beer_id) REFERENCES beer (id)`: Establishes a foreign key relationship between the `beer_id` column in `beer_category` and the `id` column in the `beer` table. This ensures referential integrity, meaning each `beer_id` in `beer_category` must exist in the `beer` table.
+  - `CONSTRAINT pc_category_id_fk FOREIGN KEY (category_id) REFERENCES category (id)`: Establishes a foreign key relationship between the `category_id` column in `beer_category` and the `id` column in the `category` table. This ensures referential integrity, meaning each `category_id` in `beer_category` must exist in the `category` table.
+
+- **Engine**:
+  - `ENGINE = InnoDB`: Like the `category` table, this table also uses the InnoDB storage engine for transaction support and foreign key constraints.
+
+### Summary
+- **`category` Table**: This table stores categories (like beer styles) with a unique ID, versioning, timestamps, and a description.
+- **`beer_category` Table**: This junction table links beers to categories, allowing a beer to belong to multiple categories and a category to include multiple beers. It enforces this many-to-many relationship through a composite primary key and foreign key constraints.
+
+By using a junction table (`beer_category`), the design effectively handles many-to-many relationships between beers and categories, ensuring data consistency and integrity across these related entities.
+
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
+
+
+@NoArgsConstructor
+@Data
+@Builder
+@AllArgsConstructor
+@Entity
+public class Category {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime lastModifiedDate;
+
+    @Column(length = 50)
+    private String description;
+
+    @ManyToMany
+    @JoinTable(name = "beer_category", joinColumns = @JoinColumn(name = "category_id"), inverseJoinColumns = @JoinColumn(name = "beer_id"))
+    private Set<Beer> beers;
+
+}
+
+```
+
+add this to the `Beer` class
+
+```java
+
+    @ManyToMany
+    @JoinTable(name = "beer_category", joinColumns = @JoinColumn(name = "beer_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> categories;
+```
+
 ## 009 Many to Many Persistence
 ## 010 One to One Bi-Directional
 ## 011 Cascade on Persist

@@ -14,6 +14,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -56,4 +57,8 @@ public class Beer {
 
     @UpdateTimestamp
     private LocalDateTime updatedDate;
+
+    @ManyToMany
+    @JoinTable(name = "beer_category", joinColumns = @JoinColumn(name = "beer_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> categories;
 }
