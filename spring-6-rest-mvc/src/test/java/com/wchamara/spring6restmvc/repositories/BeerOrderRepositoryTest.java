@@ -1,7 +1,9 @@
 package com.wchamara.spring6restmvc.repositories;
 
 import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.entities.BeerOrder;
 import com.wchamara.spring6restmvc.entities.Customer;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +32,16 @@ class BeerOrderRepositoryTest {
     }
 
     @Test
+    @Transactional
     void name() {
-        System.out.println("testCustomer = " + testCustomer.toString());
-        System.out.println("testBeer = " + testBeer.toString());
+        BeerOrder beerOrder = BeerOrder.builder()
+                .customer(testCustomer)
+                .customerRef("Test Customer Ref")
+                .build();
+
+        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+
+        System.out.println(savedBeerOrder.getCustomerRef());
 
     }
 }

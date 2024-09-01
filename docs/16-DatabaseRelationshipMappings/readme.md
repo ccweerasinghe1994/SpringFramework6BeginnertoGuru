@@ -264,6 +264,167 @@ These tables are structured to maintain data integrity and relationships between
 ![alt text](image-15.png)
 
 ![alt text](image-16.png)
+
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.sql.Timestamp;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BeerOrder {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Timestamp createdDate;
+
+    @UpdateTimestamp
+    private Timestamp lastModifiedDate;
+
+    private String customerRef;
+
+    @ManyToOne
+    private Customer customer;
+
+    public boolean isNew() {
+        return this.id == null;
+    }
+}
+
+```
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.util.UUID;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Builder
+public class BeerOrderLine {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Customer {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Column(length = 255)
+    private String email;
+
+    @Version
+    private Integer version;
+    private String name;
+
+    @CreationTimestamp
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime updateDate;
+
+    @OneToMany(mappedBy = "customer")
+    private Set<BeerOrder> beerOrders;
+}
+
+```
+
+
+The section `@OneToMany(mappedBy = "customer") private Set<BeerOrder> beerOrders;` in the `Customer` class represents a one-to-many relationship between the `Customer` entity and the `BeerOrder` entity. Let's break down what each part of this annotation and field means:
+
+### 1. **`@OneToMany` Annotation:**
+   - The `@OneToMany` annotation is used to define a one-to-many relationship between two entities.
+   - In a one-to-many relationship, one entity (the "one" side) can be associated with multiple instances of another entity (the "many" side).
+   - In this case, the `Customer` entity is on the "one" side of the relationship, and the `BeerOrder` entity is on the "many" side.
+
+### 2. **`mappedBy = "customer"`:**
+   - The `mappedBy` attribute specifies the field in the `BeerOrder` entity that owns the relationship.
+   - The value `"customer"` refers to the `customer` field in the `BeerOrder` entity. This tells JPA that the `BeerOrder` entity has a `customer` field that refers to the `Customer` entity.
+   - Essentially, it means that the `Customer` entity does not own the relationship; instead, the `BeerOrder` entity does. The `mappedBy` attribute is used to tell JPA that the mapping is already defined on the other side (in the `BeerOrder` class), and it should not create an additional foreign key column in the `Customer` table.
+
+### 3. **`private Set<BeerOrder> beerOrders;`:**
+   - This field represents a collection of `BeerOrder` objects associated with a `Customer`.
+   - The `Set<BeerOrder>` is a Java `Set` collection that will contain all the `BeerOrder` instances related to the specific `Customer`. The `Set` ensures that there are no duplicate `BeerOrder` instances associated with the same `Customer`.
+   - This collection is automatically populated by JPA/Hibernate when you load a `Customer` from the database, and it contains all the beer orders associated with that customer.
+
+### Summary of this Relationship:
+- **Customer** is the parent entity, and it can have multiple associated **BeerOrders**.
+- The `BeerOrder` entity has a field called `customer` that references the `Customer` entity.
+- The `beerOrders` field in the `Customer` class represents all the beer orders associated with that particular customer.
+- The `mappedBy = "customer"` tells JPA/Hibernate that the `BeerOrder` entity is responsible for maintaining the relationship and that the `Customer` entity should not try to manage a separate foreign key column.
+
+This setup allows you to navigate from a `Customer` to all their associated `BeerOrder` instances, making it easy to retrieve and manage the orders for a specific customer in your application.
+
+
 ## 005 Create Beer Order Repository
 
 ```java
@@ -322,7 +483,279 @@ class BeerOrderRepositoryTest {
 
 
 ## 006 Persisting Beer Order Relationships
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.entities.BeerOrder;
+import com.wchamara.spring6restmvc.entities.Customer;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class BeerOrderRepositoryTest {
+
+
+    @Autowired
+    BeerOrderRepository beerOrderRepository;
+
+    @Autowired
+    CustomerRepository customerRepository;
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    Customer testCustomer;
+    Beer testBeer;
+
+    @BeforeEach
+    void setUp() {
+        testCustomer = customerRepository.findAll().get(0);
+        testBeer = beerRepository.findAll().get(0);
+    }
+
+    @Test
+    @Transactional
+    void name() {
+        BeerOrder beerOrder = BeerOrder.builder()
+                .customer(testCustomer)
+                .customerRef("Test Customer Ref")
+                .build();
+
+        BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
+
+        System.out.println(savedBeerOrder.getCustomerRef());
+
+    }
+}
+```
 ## 007 Association Helper Methods
+
+The selected code `@Builder.Default` is an annotation provided by the Lombok library, which is used in the context of the `Customer` entity class. Lombok is a popular Java library that helps reduce boilerplate code by generating common methods and annotations at compile time.
+
+In the `Customer` class, the `@Builder.Default` annotation is applied to the `beerOrders` field. This field is a `Set` of `BeerOrder` objects, which represents the orders associated with a customer. The `@Builder.Default` annotation ensures that when the `Customer` class is instantiated using the Lombok-generated builder pattern, the `beerOrders` field is initialized with a default value if no value is provided during the building process.
+
+Here is the relevant code snippet:
+```java
+@Builder.Default
+@OneToMany(mappedBy = "customer")
+private Set<BeerOrder> beerOrders = new HashSet<>();
+```
+
+Without the `@Builder.Default` annotation, the `beerOrders` field would be `null` if not explicitly set during the building process. By using this annotation, the field is initialized to an empty `HashSet`, ensuring that it is never `null` and avoiding potential `NullPointerException` issues when accessing or modifying the `beerOrders` set.
+
+In summary, the `@Builder.Default` annotation in the `Customer` class ensures that the `beerOrders` field is initialized with a default value of an empty `HashSet` when using the builder pattern provided by Lombok. This helps maintain the integrity of the `Customer` object and prevents null-related issues.
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Customer {
+    
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Column(length = 255)
+    private String email;
+
+    @Version
+    private Integer version;
+    private String name;
+
+    @CreationTimestamp
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime updateDate;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "customer")
+    private Set<BeerOrder> beerOrders = new HashSet<>();
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Customer {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Column(length = 255)
+    private String email;
+
+    @Version
+    private Integer version;
+    private String name;
+
+    @CreationTimestamp
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime updateDate;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "customer")
+    private Set<BeerOrder> beerOrders = new HashSet<>();
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.entities.BeerOrder;
+import com.wchamara.spring6restmvc.entities.Customer;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class BeerOrderRepositoryTest {
+
+
+    @Autowired
+    BeerOrderRepository beerOrderRepository;
+
+    @Autowired
+    CustomerRepository customerRepository;
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    Customer testCustomer;
+    Beer testBeer;
+
+    @BeforeEach
+    void setUp() {
+        testCustomer = customerRepository.findAll().get(0);
+        testBeer = beerRepository.findAll().get(0);
+    }
+
+    @Test
+    @Transactional
+    void name() {
+        BeerOrder beerOrder = BeerOrder.builder()
+                .customer(testCustomer)
+                .customerRef("Test Customer Ref")
+                .build();
+
+        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+
+        System.out.println(savedBeerOrder.getCustomerRef());
+
+    }
+}
+```
+
+Let's break down the code you provided, focusing on the `@ManyToOne` annotation and the related methods in the `BeerOrder` class.
+
+### 1. **`@ManyToOne private Customer customer;`**
+
+- **`@ManyToOne` Annotation**:
+  - This annotation defines a many-to-one relationship between the `BeerOrder` entity and the `Customer` entity.
+  - In a many-to-one relationship, many instances of one entity (`BeerOrder`) are associated with one instance of another entity (`Customer`).
+  - For example, multiple beer orders can be associated with a single customer, but each beer order is associated with only one customer.
+
+- **Field `private Customer customer;`**:
+  - This field represents the `Customer` entity that is associated with the `BeerOrder`. 
+  - In the database, this relationship is typically represented by a foreign key column in the `BeerOrder` table that points to the primary key of the `Customer` table.
+
+### 2. **`BeerOrder` Constructor**
+
+```java
+public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer) {
+    this.id = id;
+    this.version = version;
+    this.createdDate = createdDate;
+    this.lastModifiedDate = lastModifiedDate;
+    this.customerRef = customerRef;
+    this.setCustomer(customer);
+}
+```
+
+- **Purpose of the Constructor**:
+  - This constructor is used to create an instance of `BeerOrder` with specific values for all its fields, including the `Customer` entity it is associated with.
+  - When a new `BeerOrder` object is created using this constructor, it sets all the provided fields, including setting the associated `Customer` using the `setCustomer` method.
+
+- **Using `setCustomer(customer)`**:
+  - Instead of directly assigning the `customer` field, the constructor uses the `setCustomer` method. This ensures that any additional logic encapsulated in the `setCustomer` method is executed when a `BeerOrder` is created.
+
+### 3. **`setCustomer(Customer customer)` Method**
+
+```java
+public void setCustomer(Customer customer) {
+    this.customer = customer;
+    customer.getBeerOrders().add(this);
+}
+```
+
+- **Purpose**:
+  - This method sets the `Customer` field for the `BeerOrder` object.
+  - It also updates the `Customer` object by adding this `BeerOrder` to the `Customer`'s set of beer orders.
+
+- **Why It’s Important**:
+  - **Bidirectional Relationship Management**: By calling `customer.getBeerOrders().add(this);`, the `BeerOrder` ensures that the `Customer` object also recognizes this `BeerOrder`. This maintains consistency in a bidirectional relationship.
+  - **Avoiding Inconsistency**: If you only set the `customer` field without updating the `Customer`'s list of orders, you could end up with inconsistent data. The `Customer` might not know about the `BeerOrder`, leading to potential issues when navigating the relationship in your application.
+
+### Summary
+
+- **`@ManyToOne` Annotation**: Defines the many-to-one relationship between `BeerOrder` and `Customer`, indicating that many beer orders can belong to a single customer.
+- **Constructor**: Initializes a `BeerOrder` with provided values and ensures the relationship with the `Customer` is properly set using the `setCustomer` method.
+- **`setCustomer` Method**: Not only sets the `Customer` field in `BeerOrder`, but also updates the `Customer`'s collection of beer orders to include the current `BeerOrder`. This ensures bidirectional consistency and maintains the integrity of the relationship.
+
+This pattern is essential in ensuring that the relationships between entities are consistently managed in both directions, which is crucial when working with object-relational mapping (ORM) frameworks like JPA/Hibernate.
+
 ## 008 Many to Many
 ## 009 Many to Many Persistence
 ## 010 One to One Bi-Directional
