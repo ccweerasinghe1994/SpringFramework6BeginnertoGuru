@@ -917,6 +917,205 @@ add this to the `Beer` class
 ```
 
 ## 009 Many to Many Persistence
+
+let's initialize the beers to a empty hashset to avoid null pointer exceptions
+and use @Builder.Default to initialize the categories to a empty hashset
+```java
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(name = "beer_category", joinColumns = @JoinColumn(name = "category_id"), inverseJoinColumns = @JoinColumn(name = "beer_id"))
+    private Set<Beer> beers = new HashSet<>();
+```
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class Beer {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+    @Version
+    private Integer version;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 50)
+    @Column(length = 50)
+    private String beerName;
+
+    @NotNull
+    private BeerStyle beerStyle;
+
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
+    private String upc;
+    private Integer quantityOnHand;
+
+    @NotNull
+    private BigDecimal price;
+
+    @CreationTimestamp
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedDate;
+
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(name = "beer_category", joinColumns = @JoinColumn(name = "beer_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> categories = new HashSet<>();
+
+
+    public void addCategory(Category category) {
+        this.categories.add(category);
+        category.getBeers().add(this);
+    }
+
+    public void removeCategory(Category category) {
+        this.categories.remove(category);
+        category.getBeers().remove(category);
+    }
+
+}
+
+```
+Let's break down and explain the annotations and methods related to the `categories` field in your `Beer` entity class.
+
+### 1. **`@Builder.Default`** Annotation**
+
+- **Purpose**:
+  - When using the Lombok `@Builder` annotation, all fields are initialized to their default values. However, if you want a specific default value to be used in the generated builder, you need to use `@Builder.Default`.
+  - In this case, `@Builder.Default` ensures that when a `Beer` object is built using the builder pattern, the `categories` field is initialized with an empty `HashSet<Category>()` by default, unless explicitly set otherwise.
+  - Without `@Builder.Default`, the builder would set `categories` to `null` unless you provided a value.
+
+### 2. **`@ManyToMany` Annotation**
+
+- **Purpose**:
+  - The `@ManyToMany` annotation is used to define a many-to-many relationship between two entities.
+  - In this context, it means that a `Beer` can belong to many `Category` entities, and a `Category` can have many `Beer` entities associated with it.
+
+### 3. **`@JoinTable` Annotation**
+
+- **Purpose**:
+  - The `@JoinTable` annotation is used to specify the details of the join table that manages the many-to-many relationship.
+  - **`name = "beer_category"`**: Specifies the name of the join table, which in this case is `beer_category`.
+  - **`joinColumns = @JoinColumn(name = "beer_id")`**: Specifies the foreign key column in the join table that refers to the `Beer` entity. This column will be named `beer_id`.
+  - **`inverseJoinColumns = @JoinColumn(name = "category_id")`**: Specifies the foreign key column in the join table that refers to the `Category` entity. This column will be named `category_id`.
+
+- **Explanation**:
+  - The `beer_category` table will have two columns, `beer_id` and `category_id`, which form a composite primary key. Each row in this table represents a relationship between a specific `Beer` and a specific `Category`.
+
+### 4. **`private Set<Category> categories = new HashSet<>();`**
+
+- **Purpose**:
+  - This field holds the `Category` entities associated with a `Beer`.
+  - It is initialized as an empty `HashSet`, meaning that when a `Beer` instance is created, it has an empty set of categories by default.
+
+### 5. **`addCategory` and `removeCategory` Methods**
+
+- **Purpose**:
+  - These methods manage the bidirectional many-to-many relationship between `Beer` and `Category`.
+  
+- **`addCategory(Category category)`**:
+  - This method adds a `Category` to the `Beer`'s `categories` set.
+  - It also ensures that the `Beer` is added to the `Category`'s set of beers, maintaining consistency in the bidirectional relationship.
+
+- **`removeCategory(Category category)`**:
+  - This method removes a `Category` from the `Beer`'s `categories` set.
+  - It also removes the `Beer` from the `Category`'s set of beers, again ensuring consistency in the bidirectional relationship.
+
+### Summary:
+
+- **`@Builder.Default`** ensures that the `categories` set is initialized to an empty `HashSet` when using the builder pattern, preventing it from being `null`.
+- **`@ManyToMany` and `@JoinTable`** together define a many-to-many relationship between `Beer` and `Category`, with the relationship managed by a join table named `beer_category`.
+- **`addCategory` and `removeCategory` methods** allow you to add or remove categories from a beer while keeping the relationship consistent in both directions, i.e., the `Beer` is added to or removed from the corresponding `Category` as well.
+
+This setup is essential for correctly handling many-to-many relationships in JPA, ensuring data integrity and maintaining consistent relationships between your entities.
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Category;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface CategoryRepository extends JpaRepository<Category, UUID> {
+}
+
+```
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.entities.Category;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class CategoryRepositoryTest {
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    @Autowired
+    CategoryRepository categoryRepository;
+
+    Beer testBeer;
+
+    @BeforeEach
+    void setUp() {
+        testBeer = beerRepository.findAll().get(0);
+    }
+
+    @Test
+    @Transactional
+    void testAddCategory() {
+
+        Category testCategory = Category.builder().description("Ales").build();
+        Category savedCategory = categoryRepository.save(testCategory);
+
+        testBeer.addCategory(savedCategory);
+
+        Beer savedBeer = beerRepository.save(testBeer);
+
+        System.out.println(savedBeer.getCategories().size());
+    }
+}
+```
+![alt text](image-17.png)
+
+
 ## 010 One to One Bi-Directional
 ## 011 Cascade on Persist
 ## 012 Hibernate Cascade Types
