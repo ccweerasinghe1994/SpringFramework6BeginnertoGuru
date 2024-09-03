@@ -1,7 +1,10 @@
 package com.wchamara.spring6restmvc.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -11,13 +14,12 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
-@Setter
+@Entity
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Builder
-public class BeerOrderLine {
+public class BeerOrderShipment {
 
     @Id
     @GeneratedValue
@@ -36,15 +38,10 @@ public class BeerOrderLine {
     @UpdateTimestamp
     private LocalDateTime lastModifiedDate;
 
-    private Integer orderQuantity;
+    private String trackingNumber;
 
-    private Integer quantityAllocated;
+    @OneToOne
+    private BeerOrder beerOrder;
 
 
 }
-
-
-//    beer_id            varchar(36) DEFAULT NULL,
-
-
-//    beer_order_id      varchar(36) DEFAULT NULL,

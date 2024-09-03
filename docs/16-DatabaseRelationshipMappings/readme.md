@@ -1117,5 +1117,363 @@ class CategoryRepositoryTest {
 
 
 ## 010 One to One Bi-Directional
+
+```sql
+drop table if exists beer_order_shipment;
+
+create table beer_order_shipment
+(
+    id                 VARCHAR(36) NOT NULL PRIMARY KEY,
+    beer_order_id      VARCHAR(36) UNIQUE,
+    tracking_number    VARCHAR(50),
+    version            BIGINT      DEFAULT NULL,
+    created_date       TIMESTAMP,
+    last_modified_date DATETIME(6) DEFAULT NULL,
+    CONSTRAINT bos_pk FOREIGN KEY (beer_order_id) REFERENCES beer_order (id)
+
+) ENGINE = InnoDB;
+
+ALTER TABLE beer_order
+    ADD COLUMN beer_order_shipment_id VARCHAR(36);
+
+ALTER TABLE beer_order
+    ADD CONSTRAINT bos_shipment_fk FOREIGN KEY (beer_order_shipment_id) REFERENCES beer_order_shipment (id);
+```
+
+The SQL script provided is used to create a table and establish relationships between two tables in a database. Here’s a simple explanation:
+
+1. **Drop Table (if it exists):**
+   - `drop table if exists beer_order_shipment;`  
+     This line ensures that if the `beer_order_shipment` table already exists, it is deleted before creating a new one. This prevents errors due to duplicate table names.
+
+2. **Create Table (beer_order_shipment):**
+   - The `beer_order_shipment` table is being created with several columns:
+     - `id`: A unique identifier for each shipment, defined as a string (VARCHAR) with a length of 36 characters. It’s also the primary key of the table, meaning each `id` must be unique.
+     - `beer_order_id`: A reference to the `beer_order` table, ensuring that each shipment is associated with a specific beer order. It is marked as unique, meaning each shipment can only be linked to one beer order.
+     - `tracking_number`: A string (up to 50 characters) for storing the shipment’s tracking number.
+     - `version`: A numeric value that can be used to track the version of the record.
+     - `created_date`: A timestamp to record when the shipment record was created.
+     - `last_modified_date`: A timestamp with microsecond precision for the last time the record was modified.
+   - The `beer_order_id` column is also set up as a foreign key, meaning it must match an `id` from the `beer_order` table.
+
+3. **Modify the `beer_order` Table:**
+   - Two changes are made to the `beer_order` table:
+     - A new column, `beer_order_shipment_id`, is added to the `beer_order` table. This column will store the `id` of the corresponding shipment from the `beer_order_shipment` table.
+     - A foreign key constraint is added to the `beer_order_shipment_id` column, ensuring that the value in this column must match an `id` in the `beer_order_shipment` table.
+
+**In summary:** This script creates a new table for managing beer order shipments and establishes a relationship between the `beer_order` and `beer_order_shipment` tables. It ensures that each beer order can be linked to a shipment and vice versa.
+
+In MySQL, the `CONSTRAINT` command is used to define rules (constraints) on data in a table. Constraints enforce certain rules on the data, ensuring the integrity, accuracy, and reliability of the data in the database. Here’s an explanation of different types of constraints that can be applied using the `CONSTRAINT` command:
+
+### 1. **Primary Key Constraint (`PRIMARY KEY`)**
+   - **Purpose:** Uniquely identifies each record in a table.
+   - **Syntax:**
+     ```sql
+     CONSTRAINT constraint_name PRIMARY KEY (column_name)
+     ```
+   - **Example:** 
+     ```sql
+     CONSTRAINT pk_beer_order PRIMARY KEY (id)
+     ```
+   - **Explanation:** Ensures that the `id` column in the table contains unique values and no two rows have the same `id`. The primary key cannot contain `NULL` values.
+
+### 2. **Foreign Key Constraint (`FOREIGN KEY`)**
+   - **Purpose:** Ensures that a value in one table corresponds to a value in another table. It establishes a relationship between two tables.
+   - **Syntax:**
+     ```sql
+     CONSTRAINT constraint_name FOREIGN KEY (column_name) REFERENCES other_table_name (other_column_name)
+     ```
+   - **Example:**
+     ```sql
+     CONSTRAINT fk_beer_order FOREIGN KEY (beer_order_id) REFERENCES beer_order (id)
+     ```
+   - **Explanation:** Ensures that the value in the `beer_order_id` column of the `beer_order_shipment` table matches an `id` in the `beer_order` table. This maintains referential integrity between the two tables.
+
+### 3. **Unique Constraint (`UNIQUE`)**
+   - **Purpose:** Ensures that all the values in a column are unique.
+   - **Syntax:**
+     ```sql
+     CONSTRAINT constraint_name UNIQUE (column_name)
+     ```
+   - **Example:**
+     ```sql
+     CONSTRAINT uq_tracking_number UNIQUE (tracking_number)
+     ```
+   - **Explanation:** Ensures that no two rows in the table can have the same value in the `tracking_number` column.
+
+### 4. **Check Constraint (`CHECK`)**
+   - **Purpose:** Ensures that all values in a column satisfy a specific condition.
+   - **Syntax:**
+     ```sql
+     CONSTRAINT constraint_name CHECK (condition)
+     ```
+   - **Example:**
+     ```sql
+     CONSTRAINT chk_version CHECK (version > 0)
+     ```
+   - **Explanation:** Ensures that the value in the `version` column is always greater than 0.
+
+### 5. **Default Constraint (`DEFAULT`)**
+   - **Purpose:** Sets a default value for a column if no value is specified when a row is inserted.
+   - **Syntax:**
+     ```sql
+     CONSTRAINT constraint_name DEFAULT (default_value) FOR column_name
+     ```
+   - **Example:**
+     ```sql
+     CONSTRAINT df_last_modified_date DEFAULT CURRENT_TIMESTAMP FOR last_modified_date
+     ```
+   - **Explanation:** Ensures that if no value is provided for `last_modified_date`, it will automatically be set to the current timestamp.
+
+### **Naming Constraints**
+   - **Purpose:** Naming constraints help to easily identify and manage them, especially when you need to modify or drop them later.
+   - **Example:**
+     ```sql
+     CONSTRAINT bos_pk PRIMARY KEY (id)
+     ```
+   - **Explanation:** The constraint is named `bos_pk` and it enforces a primary key on the `id` column.
+
+### **Usage in Table Definitions**
+   - Constraints are usually defined at the time of creating the table or can be added later using the `ALTER TABLE` statement.
+   - Example in a table creation:
+     ```sql
+     CREATE TABLE beer_order_shipment (
+         id VARCHAR(36) NOT NULL,
+         beer_order_id VARCHAR(36),
+         CONSTRAINT bos_pk PRIMARY KEY (id),
+         CONSTRAINT bos_fk FOREIGN KEY (beer_order_id) REFERENCES beer_order(id)
+     );
+     ```
+
+### **Summary:**
+The `CONSTRAINT` command in MySQL is a powerful tool to enforce data integrity by specifying rules that data in your tables must follow. Constraints can ensure uniqueness, establish relationships between tables, enforce specific data conditions, and much more, thereby helping maintain the accuracy and reliability of your database.
+
+![alt text](image-18.png)
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BeerOrderShipment {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdDate;
+
+    @UpdateTimestamp
+    private LocalDateTime lastModifiedDate;
+
+    private String trackingNumber;
+
+    @OneToOne
+    private BeerOrder beerOrder;
+
+
+}
+
+```
+
+This Java class defines an entity named `BeerOrderShipment` that maps to a table in a relational database. The class is part of a Spring Boot application using JPA (Java Persistence API) with Hibernate as the ORM (Object-Relational Mapping) provider. Below is a breakdown of each part of the code and what it does:
+
+### 1. **Annotations at the Class Level**
+   - `@Entity`: This annotation marks the class as a JPA entity, meaning it will be mapped to a table in the database.
+   - `@Data`: This Lombok annotation automatically generates getters, setters, `toString()`, `equals()`, and `hashCode()` methods for the class.
+   - `@NoArgsConstructor`: Generates a no-argument constructor for the class.
+   - `@AllArgsConstructor`: Generates a constructor with arguments for all fields in the class.
+   - `@Builder`: This Lombok annotation allows you to create objects of the class using the builder pattern, making object construction easier and more readable.
+
+### 2. **Fields and Annotations**
+   - `@Id`: Marks the `id` field as the primary key of the entity.
+   - `@GeneratedValue`: Specifies that the value of the `id` should be generated automatically.
+   - `@UuidGenerator`: This is a Hibernate annotation that automatically generates UUID values for the `id` field.
+   - `@JdbcTypeCode(SqlTypes.CHAR)`: Specifies the SQL type used for storing the UUID in the database. Here, it’s stored as a `CHAR` with a length of 36 characters.
+   - `@Column`: Provides additional specifications for the column in the database. For the `id` field:
+     - `length = 36`: Sets the length of the column to 36 characters.
+     - `columnDefinition = "varchar(36)"`: Specifies the column type as `varchar(36)`.
+     - `updatable = false`: The `id` cannot be updated once it’s set.
+     - `nullable = false`: The `id` field cannot be `NULL`.
+   - `private UUID id;`: The primary key field of type `UUID`.
+   
+   - `@Version`: This annotation marks the `version` field for optimistic locking, which is used to handle concurrent updates to the entity. It helps in preventing conflicts when multiple transactions try to update the same entity simultaneously.
+   - `private Long version;`: Field for versioning the entity.
+
+   - `@CreationTimestamp`: Automatically populates the `createdDate` field with the current timestamp when the entity is first persisted.
+   - `@Column(updatable = false)`: The `createdDate` field cannot be updated once it’s set.
+   - `private LocalDateTime createdDate;`: Field to store when the entity was created.
+
+   - `@UpdateTimestamp`: Automatically updates the `lastModifiedDate` field with the current timestamp whenever the entity is updated.
+   - `private LocalDateTime lastModifiedDate;`: Field to store when the entity was last modified.
+
+   - `private String trackingNumber;`: Field to store the shipment's tracking number.
+
+   - `@OneToOne`: Specifies a one-to-one relationship between `BeerOrderShipment` and `BeerOrder`. This means each shipment is associated with exactly one beer order.
+   - `private BeerOrder beerOrder;`: Field that references the associated `BeerOrder` entity.
+
+### 3. **How This Maps to a Database Table**
+   - The `BeerOrderShipment` class is mapped to a table with columns corresponding to the fields in the class.
+   - The `id` column is the primary key and is automatically generated as a UUID.
+   - The `createdDate` and `lastModifiedDate` fields are automatically managed timestamps.
+   - The `beerOrder` field is a foreign key reference to another table (likely named `beer_order`) that contains beer orders.
+
+### **Summary:**
+The `BeerOrderShipment` class is an entity representing a shipment of a beer order. It includes fields for a unique ID (`UUID`), versioning for concurrency control, timestamps for tracking when the record was created and last modified, a tracking number, and a reference to a beer order. The class is designed to be used within a Spring Boot application with JPA and Hibernate to persist data to a relational database.
+
+```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.sql.Timestamp;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@NoArgsConstructor
+@Data
+@Builder
+public class BeerOrder {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Timestamp createdDate;
+
+    @UpdateTimestamp
+    private Timestamp lastModifiedDate;
+    private String customerRef;
+
+    @ManyToOne
+    private Customer customer;
+
+    @OneToOne
+    private BeerOrderShipment beerOrderShipment;
+
+    public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer, BeerOrderShipment beerOrderShipment) {
+        this.id = id;
+        this.version = version;
+        this.createdDate = createdDate;
+        this.lastModifiedDate = lastModifiedDate;
+        this.customerRef = customerRef;
+        this.setCustomer(customer);
+        this.beerOrderShipment = beerOrderShipment;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+        customer.getBeerOrders().add(this);
+    }
+
+    public boolean isNew() {
+        return this.id == null;
+    }
+}
+
+```
+
+This Java class defines an entity named `BeerOrder` that maps to a table in a relational database. The class is part of a Spring Boot application using JPA (Java Persistence API) with Hibernate as the ORM (Object-Relational Mapping) provider. Here’s a breakdown of each part of the code and what it does:
+
+### 1. **Annotations at the Class Level**
+   - `@Entity`: This annotation marks the class as a JPA entity, meaning it will be mapped to a table in the database.
+   - `@Getter` and `@Setter`: Lombok annotations that automatically generate getter and setter methods for all fields in the class.
+   - `@NoArgsConstructor`: Lombok annotation that generates a no-argument constructor for the class.
+   - `@Data`: This Lombok annotation includes `@Getter`, `@Setter`, and additional methods like `toString()`, `equals()`, and `hashCode()`.
+   - `@Builder`: Lombok annotation that allows you to create instances of this class using the builder pattern, making object construction easier and more readable.
+
+### 2. **Fields and Annotations**
+   - `@Id`: Marks the `id` field as the primary key of the entity.
+   - `@GeneratedValue`: Specifies that the value of the `id` should be generated automatically.
+   - `@UuidGenerator`: Hibernate annotation that automatically generates UUID values for the `id` field.
+   - `@JdbcTypeCode(SqlTypes.CHAR)`: Specifies that the UUID should be stored as a `CHAR` type in the database, with a length of 36 characters.
+   - `@Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)`: Provides additional specifications for the column in the database:
+     - `length = 36`: Sets the length of the column to 36 characters.
+     - `columnDefinition = "varchar(36)"`: Specifies the column type as `varchar(36)`.
+     - `updatable = false`: The `id` cannot be updated once it’s set.
+     - `nullable = false`: The `id` field cannot be `NULL`.
+   - `private UUID id;`: The primary key field of type `UUID`.
+
+   - `@Version`: This annotation marks the `version` field for optimistic locking, which is used to handle concurrent updates to the entity. It helps in preventing conflicts when multiple transactions try to update the same entity simultaneously.
+   - `private Long version;`: Field for versioning the entity.
+
+   - `@CreationTimestamp`: Automatically populates the `createdDate` field with the current timestamp when the entity is first persisted.
+   - `@Column(updatable = false)`: The `createdDate` field cannot be updated once it’s set.
+   - `private Timestamp createdDate;`: Field to store when the entity was created.
+
+   - `@UpdateTimestamp`: Automatically updates the `lastModifiedDate` field with the current timestamp whenever the entity is updated.
+   - `private Timestamp lastModifiedDate;`: Field to store when the entity was last modified.
+
+   - `private String customerRef;`: Field to store a reference related to the customer.
+
+   - `@ManyToOne`: Specifies a many-to-one relationship between `BeerOrder` and `Customer`. This means many beer orders can be associated with a single customer.
+   - `private Customer customer;`: Field that references the associated `Customer` entity.
+
+   - `@OneToOne`: Specifies a one-to-one relationship between `BeerOrder` and `BeerOrderShipment`. This means each beer order can have exactly one associated shipment.
+   - `private BeerOrderShipment beerOrderShipment;`: Field that references the associated `BeerOrderShipment` entity.
+
+### 3. **Constructor with Parameters**
+   - This constructor initializes all fields of the `BeerOrder` class. It’s not generated by Lombok because it includes custom logic (specifically in the `setCustomer` method).
+   - The `setCustomer` method is called within the constructor to not only set the `customer` field but also to ensure that the `BeerOrder` is added to the customer's list of beer orders.
+
+### 4. **Custom Methods**
+   - `public void setCustomer(Customer customer)`: This method sets the `customer` field and adds the current `BeerOrder` to the customer's list of beer orders. This helps maintain the bidirectional relationship between `BeerOrder` and `Customer`.
+   - `public boolean isNew()`: This method checks if the `BeerOrder` is new (i.e., it hasn't been persisted yet) by checking if the `id` is `null`.
+
+### **How This Maps to a Database Table**
+   - The `BeerOrder` class is mapped to a table with columns corresponding to the fields in the class.
+   - The `id` column is the primary key and is automatically generated as a UUID.
+   - The `createdDate` and `lastModifiedDate` fields are automatically managed timestamps.
+   - The `customer` field establishes a many-to-one relationship with the `Customer` table.
+   - The `beerOrderShipment` field establishes a one-to-one relationship with the `BeerOrderShipment` table.
+
+### **Summary:**
+The `BeerOrder` class is an entity representing an order for beer. It includes fields for a unique ID (`UUID`), versioning for concurrency control, timestamps for tracking when the order was created and last modified, a reference for the customer, and relationships to the `Customer` and `BeerOrderShipment` entities. The class is designed to be used within a Spring Boot application with JPA and Hibernate to persist data to a relational database. The `isNew()` method is a helper to check if the order is new and hasn’t been saved to the database yet. The `setCustomer` method ensures that the relationship between `BeerOrder` and `Customer` is maintained correctly.
+
+
 ## 011 Cascade on Persist
+```java
+
+```
 ## 012 Hibernate Cascade Types

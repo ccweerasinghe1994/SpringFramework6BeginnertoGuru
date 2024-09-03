@@ -1,10 +1,7 @@
 package com.wchamara.spring6restmvc.entities;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,6 +15,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @NoArgsConstructor
+@Data
 @Builder
 public class BeerOrder {
 
@@ -27,24 +25,32 @@ public class BeerOrder {
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
     private UUID id;
+
     @Version
     private Long version;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Timestamp createdDate;
+
     @UpdateTimestamp
     private Timestamp lastModifiedDate;
     private String customerRef;
+
     @ManyToOne
     private Customer customer;
 
-    public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer) {
+    @OneToOne
+    private BeerOrderShipment beerOrderShipment;
+
+    public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer, BeerOrderShipment beerOrderShipment) {
         this.id = id;
         this.version = version;
         this.createdDate = createdDate;
         this.lastModifiedDate = lastModifiedDate;
         this.customerRef = customerRef;
         this.setCustomer(customer);
+        this.beerOrderShipment = beerOrderShipment;
     }
 
     public void setCustomer(Customer customer) {
