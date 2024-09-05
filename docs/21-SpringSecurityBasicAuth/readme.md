@@ -1,5 +1,33 @@
 # 21 - Spring Security Basic Auth
 
+- [21 - Spring Security Basic Auth](#21---spring-security-basic-auth)
+  - [001 Introduction](#001-introduction)
+  - [002 Adding Spring Security Dependencies](#002-adding-spring-security-dependencies)
+    - [1. **`spring-boot-starter-security`**](#1-spring-boot-starter-security)
+      - [Description:](#description)
+      - [What it Includes:](#what-it-includes)
+      - [Example Usage:](#example-usage)
+        - [Example 1: Basic Authentication](#example-1-basic-authentication)
+        - [Example 2: Custom Authentication and Authorization](#example-2-custom-authentication-and-authorization)
+      - [Key Components Provided:](#key-components-provided)
+    - [2. **`spring-security-test`**](#2-spring-security-test)
+      - [Description:](#description-1)
+      - [What it Includes:](#what-it-includes-1)
+      - [Example Usage:](#example-usage-1)
+        - [Example 1: Testing Controller with Mock User](#example-1-testing-controller-with-mock-user)
+        - [Example 2: Testing with Custom Security Context](#example-2-testing-with-custom-security-context)
+      - [Key Components Provided:](#key-components-provided-1)
+    - [Summary](#summary)
+  - [003 Calling Rest API with Postman and HTTP Basic](#003-calling-rest-api-with-postman-and-http-basic)
+  - [004 Customizing User Name and Password](#004-customizing-user-name-and-password)
+  - [005 Testing Spring Security with JUnit 5](#005-testing-spring-security-with-junit-5)
+  - [006 Spring Security Config - Disable CSRF](#006-spring-security-config---disable-csrf)
+  - [007 Spring Security with Web Application Context](#007-spring-security-with-web-application-context)
+  - [008 HTTP Basic with RestTemplate](#008-http-basic-with-resttemplate)
+  - [009 Refactor of RestTemplate Builder Config](#009-refactor-of-resttemplate-builder-config)
+  - [010 HTTP Basic with RestTemplate Mock Context](#010-http-basic-with-resttemplate-mock-context)
+
+
 ## 001 Introduction
 ## 002 Adding Spring Security Dependencies
 ```xml
