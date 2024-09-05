@@ -1473,7 +1473,480 @@ The `BeerOrder` class is an entity representing an order for beer. It includes f
 
 
 ## 011 Cascade on Persist
+
+
 ```java
+package com.wchamara.spring6restmvc.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import java.sql.Timestamp;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@NoArgsConstructor
+@Data
+@Builder
+public class BeerOrder {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Timestamp createdDate;
+
+    @UpdateTimestamp
+    private Timestamp lastModifiedDate;
+    private String customerRef;
+
+    @ManyToOne
+    private Customer customer;
+
+    @OneToOne(cascade = CascadeType.PERSIST)
+    private BeerOrderShipment beerOrderShipment;
+
+    public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer, BeerOrderShipment beerOrderShipment) {
+        this.id = id;
+        this.version = version;
+        this.createdDate = createdDate;
+        this.lastModifiedDate = lastModifiedDate;
+        this.customerRef = customerRef;
+        this.setCustomer(customer);
+        this.setBeerOrderShipment(beerOrderShipment);
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+        customer.getBeerOrders().add(this);
+    }
+
+    public void setBeerOrderShipment(BeerOrderShipment beerOrderShipment) {
+        this.beerOrderShipment = beerOrderShipment;
+        this.beerOrderShipment.setBeerOrder(this);
+    }
+
+    public boolean isNew() {
+        return this.id == null;
+    }
+}
 
 ```
+
+This updated `BeerOrder` class includes the same functionality as before but adds a few key enhancements, particularly in how it manages its relationships with the `Customer` and `BeerOrderShipment` entities. Here’s an explanation of the updated code:
+
+### 1. **Class-Level Annotations**
+   - `@Entity`: Marks the class as a JPA entity, meaning it will be mapped to a table in the database.
+   - `@Getter` and `@Setter`: Lombok annotations that automatically generate getter and setter methods for all fields in the class.
+   - `@NoArgsConstructor`: Lombok annotation that generates a no-argument constructor for the class.
+   - `@Data`: Combines several Lombok features, including getters, setters, `toString()`, `equals()`, and `hashCode()`.
+   - `@Builder`: Lombok annotation that provides a builder pattern for creating instances of the `BeerOrder` class.
+
+### 2. **Fields and Annotations**
+   - **Primary Key:**
+     - `@Id`: Marks the `id` field as the primary key of the entity.
+     - `@GeneratedValue`: Specifies that the value of the `id` should be generated automatically.
+     - `@UuidGenerator`: Automatically generates a UUID value for the `id` field.
+     - `@JdbcTypeCode(SqlTypes.CHAR)`: Specifies that the UUID should be stored as a `CHAR` type in the database, with a length of 36 characters.
+     - `@Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)`: Configures the column in the database with specific characteristics:
+       - `length = 36`: Specifies the column length as 36 characters.
+       - `columnDefinition = "varchar(36)"`: Defines the column as `varchar(36)` in the database.
+       - `updatable = false`: The column value cannot be updated once it is set.
+       - `nullable = false`: The column value cannot be `NULL`.
+     - `private UUID id;`: This is the primary key field.
+
+   - **Versioning:**
+     - `@Version`: Marks the `version` field for optimistic locking to prevent conflicts during concurrent updates.
+     - `private Long version;`: This field is used for versioning the entity.
+
+   - **Timestamps:**
+     - `@CreationTimestamp`: Automatically populates the `createdDate` field with the current timestamp when the entity is first persisted.
+     - `@Column(updatable = false)`: Ensures that the `createdDate` field cannot be updated once it’s set.
+     - `private Timestamp createdDate;`: Stores when the entity was created.
+     - `@UpdateTimestamp`: Automatically updates the `lastModifiedDate` field with the current timestamp whenever the entity is updated.
+     - `private Timestamp lastModifiedDate;`: Stores when the entity was last modified.
+
+   - **Customer Reference:**
+     - `private String customerRef;`: A reference field for identifying or relating the order to a customer in the application.
+
+   - **Customer Relationship:**
+     - `@ManyToOne`: Specifies a many-to-one relationship between `BeerOrder` and `Customer`. Multiple beer orders can be associated with one customer.
+     - `private Customer customer;`: The associated `Customer` entity.
+
+   - **Shipment Relationship:**
+     - `@OneToOne(cascade = CascadeType.PERSIST)`: Specifies a one-to-one relationship between `BeerOrder` and `BeerOrderShipment`. The `CascadeType.PERSIST` means that when a `BeerOrder` is saved, its associated `BeerOrderShipment` is also saved automatically.
+     - `private BeerOrderShipment beerOrderShipment;`: The associated `BeerOrderShipment` entity.
+
+### 3. **Custom Methods**
+   - **Parameterized Constructor:**
+     - The constructor initializes all fields, including relationships with `Customer` and `BeerOrderShipment`. The relationships are set using the `setCustomer` and `setBeerOrderShipment` methods.
+     - `public BeerOrder(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String customerRef, Customer customer, BeerOrderShipment beerOrderShipment)`: Initializes the `BeerOrder` object with specified values.
+
+   - **setCustomer Method:**
+     - `public void setCustomer(Customer customer)`: Sets the `customer` field and adds the current `BeerOrder` to the customer's list of beer orders. This ensures that the relationship is maintained in both directions.
+     - `customer.getBeerOrders().add(this);`: Adds the current `BeerOrder` to the customer's list of orders, ensuring the bidirectional relationship is properly managed.
+
+   - **setBeerOrderShipment Method:**
+     - `public void setBeerOrderShipment(BeerOrderShipment beerOrderShipment)`: Sets the `beerOrderShipment` field and associates the `BeerOrder` with the `BeerOrderShipment`. 
+     - `this.beerOrderShipment.setBeerOrder(this);`: Ensures the `BeerOrder` is properly linked to the `BeerOrderShipment`, maintaining the bidirectional relationship.
+
+   - **isNew Method:**
+     - `public boolean isNew()`: Returns `true` if the `BeerOrder` is new (i.e., it hasn't been persisted yet) by checking if the `id` is `null`.
+
+### **Summary:**
+The `BeerOrder` class represents an order for beer in a relational database. It includes fields for a unique identifier (`UUID`), versioning for optimistic locking, timestamps for creation and last modification, a reference to the customer, and relationships to the `Customer` and `BeerOrderShipment` entities. The class manages its relationships with `Customer` and `BeerOrderShipment` in a way that ensures the integrity and consistency of the data. The cascade behavior on the `beerOrderShipment` relationship ensures that when a `BeerOrder` is saved, the associated `BeerOrderShipment` is automatically saved as well.
+
+```java
+package com.wchamara.spring6restmvc.repositories;
+
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.entities.BeerOrder;
+import com.wchamara.spring6restmvc.entities.BeerOrderShipment;
+import com.wchamara.spring6restmvc.entities.Customer;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class BeerOrderRepositoryTest {
+
+
+    @Autowired
+    BeerOrderRepository beerOrderRepository;
+
+    @Autowired
+    CustomerRepository customerRepository;
+
+    @Autowired
+    BeerRepository beerRepository;
+
+    Customer testCustomer;
+    Beer testBeer;
+
+    @BeforeEach
+    void setUp() {
+        testCustomer = customerRepository.findAll().get(0);
+        testBeer = beerRepository.findAll().get(0);
+    }
+
+    @Test
+    @Transactional
+    void name() {
+        BeerOrderShipment orderShipment = BeerOrderShipment.builder().trackingNumber("123456").build();
+        BeerOrder beerOrder = BeerOrder.builder()
+                .customer(testCustomer)
+                .customerRef("Test Customer Ref")
+                .beerOrderShipment(orderShipment)
+                .build();
+
+        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+
+        System.out.println(savedBeerOrder.getCustomerRef());
+
+    }
+}
+```
+![alt text](image-19.png)
+
 ## 012 Hibernate Cascade Types
+![alt text](image-20.png)
+
+In JPA (Java Persistence API), cascade types define how the persistence operations (like persist, merge, remove, etc.) are propagated from a parent entity to its associated child entities. This ensures that operations on the parent entity also affect its related entities, according to the specified cascade types. Here’s a detailed explanation of each cascade type in JPA, along with examples in the context of a Spring Boot application.
+
+### 1. **CascadeType.PERSIST**
+   - **Purpose:** When you save (persist) the parent entity, the related child entities are also saved.
+   - **Example:**
+     Suppose you have two entities, `Order` and `OrderItem`, where an `Order` contains multiple `OrderItem` objects.
+
+     ```java
+     @Entity
+     public class Order {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+
+         @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
+         private List<OrderItem> items = new ArrayList<>();
+
+         // Getters and Setters
+     }
+
+     @Entity
+     public class OrderItem {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+
+         @ManyToOne
+         @JoinColumn(name = "order_id")
+         private Order order;
+
+         // Getters and Setters
+     }
+     ```
+
+     **Usage:**
+     ```java
+     Order order = new Order();
+     OrderItem item1 = new OrderItem();
+     item1.setOrder(order);
+     order.getItems().add(item1);
+
+     orderRepository.save(order); // Automatically persists `item1` due to CascadeType.PERSIST
+     ```
+
+### 2. **CascadeType.MERGE**
+   - **Purpose:** When you merge (update) the parent entity, the related child entities are also merged.
+   - **Example:**
+     Continuing with the `Order` and `OrderItem` example:
+
+     ```java
+     @OneToMany(mappedBy = "order", cascade = CascadeType.MERGE)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     OrderItem item1 = order.getItems().get(0);
+     item1.setPrice(new BigDecimal("19.99")); // Modify item1
+
+     orderRepository.save(order); // Automatically merges `item1` due to CascadeType.MERGE
+     ```
+
+### 3. **CascadeType.REMOVE**
+   - **Purpose:** When you delete (remove) the parent entity, the related child entities are also deleted.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = CascadeType.REMOVE)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     orderRepository.delete(order); // Automatically deletes `items` due to CascadeType.REMOVE
+     ```
+
+### 4. **CascadeType.REFRESH**
+   - **Purpose:** When you refresh the parent entity, the state of the related child entities is also refreshed.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = CascadeType.REFRESH)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     entityManager.refresh(order); // Automatically refreshes `items` due to CascadeType.REFRESH
+     ```
+
+### 5. **CascadeType.DETACH**
+   - **Purpose:** When you detach the parent entity, the related child entities are also detached, meaning they are no longer managed by the persistence context.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = CascadeType.DETACH)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     entityManager.detach(order); // Automatically detaches `items` due to CascadeType.DETACH
+     ```
+
+### 6. **CascadeType.ALL**
+   - **Purpose:** This is a shorthand for applying all the above cascade types (`PERSIST`, `MERGE`, `REMOVE`, `REFRESH`, and `DETACH`) to the relationship.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = new Order();
+     OrderItem item1 = new OrderItem();
+     item1.setOrder(order);
+     order.getItems().add(item1);
+
+     orderRepository.save(order); // PERSIST
+     
+     order.setCustomerName("Updated Customer");
+     orderRepository.save(order); // MERGE
+
+     entityManager.detach(order); // DETACH
+
+     entityManager.refresh(order); // REFRESH
+
+     orderRepository.delete(order); // REMOVE
+     ```
+
+### **Summary:**
+Cascade types in JPA provide a way to propagate operations from a parent entity to its related child entities automatically. By applying cascade types like `PERSIST`, `MERGE`, `REMOVE`, `REFRESH`, `DETACH`, and `ALL`, you ensure that your operations on the parent entity are seamlessly reflected in the associated entities, maintaining data integrity and reducing boilerplate code. Each cascade type is useful for different scenarios depending on the lifecycle and interaction of the related entities.
+
+![alt text](image-21.png)
+
+Hibernate, which is a popular ORM (Object-Relational Mapping) tool in the Java ecosystem, provides additional cascade types that go beyond the standard JPA cascade types. These Hibernate-specific cascade types give you more control over the entity relationships and their lifecycle events. Here's an explanation of Hibernate-specific cascade types, along with examples in the context of a Spring Boot application.
+
+### Hibernate-Specific Cascade Types
+
+1. **CascadeType.SAVE_UPDATE**
+   - **Purpose:** This is a Hibernate-specific cascade type that cascades both save and update operations. If the parent entity is saved or updated, the child entities are also saved or updated.
+   - **Example:**
+     Consider an `Order` entity that contains multiple `OrderItem` entities.
+
+     ```java
+     @Entity
+     public class Order {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+
+         @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+         private List<OrderItem> items = new ArrayList<>();
+
+         // Getters and Setters
+     }
+
+     @Entity
+     public class OrderItem {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+
+         @ManyToOne
+         @JoinColumn(name = "order_id")
+         private Order order;
+
+         // Getters and Setters
+     }
+     ```
+
+     **Usage:**
+     ```java
+     Order order = new Order();
+     OrderItem item1 = new OrderItem();
+     item1.setOrder(order);
+     order.getItems().add(item1);
+
+     orderRepository.save(order); // Automatically saves `item1` due to SAVE_UPDATE
+     
+     item1.setPrice(new BigDecimal("19.99")); // Update item1
+     orderRepository.save(order); // Automatically updates `item1` due to SAVE_UPDATE
+     ```
+
+2. **CascadeType.LOCK**
+   - **Purpose:** This cascade type is specific to Hibernate and is used to propagate a lock operation to the associated entities. When a parent entity is locked, the associated entities are also locked.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.LOCK)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     entityManager.lock(order, LockModeType.PESSIMISTIC_WRITE); // Automatically locks `items` due to LOCK
+     ```
+
+3. **CascadeType.REPLICATE**
+   - **Purpose:** This cascade type is used to replicate the state of the parent entity and its associated entities to another database. It is useful in scenarios involving data replication across multiple databases.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.REPLICATE)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     entityManager.replicate(order, ReplicationMode.LATEST_VERSION); // Automatically replicates `items` due to REPLICATE
+     ```
+
+4. **CascadeType.SAVE_UPDATE (Alternative to JPA's PERSIST and MERGE)**
+   - **Purpose:** This Hibernate-specific cascade type serves as an alternative to using both `PERSIST` and `MERGE` together in JPA. It ensures that associated entities are saved or updated as necessary when the parent entity is saved or updated.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = new Order();
+     OrderItem item1 = new OrderItem();
+     item1.setOrder(order);
+     order.getItems().add(item1);
+
+     orderRepository.save(order); // Automatically saves or updates `item1` due to SAVE_UPDATE
+     ```
+
+5. **CascadeType.DELETE**
+   - **Purpose:** In Hibernate, `CascadeType.DELETE` is similar to JPA's `CascadeType.REMOVE`. It cascades the delete operation from the parent entity to the associated child entities.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.DELETE)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     orderRepository.delete(order); // Automatically deletes `items` due to DELETE
+     ```
+
+6. **CascadeType.DELETE_ORPHAN**
+   - **Purpose:** This Hibernate-specific cascade type ensures that when a parent entity is deleted, any associated child entities that are "orphaned" (i.e., no longer associated with any parent) are also deleted. This is a special case of cascading deletes.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = {org.hibernate.annotations.CascadeType.DELETE_ORPHAN, org.hibernate.annotations.CascadeType.SAVE_UPDATE})
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = orderRepository.findById(1L).get();
+     order.getItems().remove(0); // Remove an item from the order
+
+     orderRepository.save(order); // The removed item is automatically deleted due to DELETE_ORPHAN
+     ```
+
+7. **CascadeType.ALL**
+   - **Purpose:** This is a Hibernate-specific shortcut that includes all the above cascade types (`SAVE_UPDATE`, `DELETE`, `DELETE_ORPHAN`, `LOCK`, and `REPLICATE`). It is similar to JPA's `CascadeType.ALL`, but includes Hibernate's additional cascade types.
+   - **Example:**
+     ```java
+     @OneToMany(mappedBy = "order", cascade = org.hibernate.annotations.CascadeType.ALL)
+     private List<OrderItem> items = new ArrayList<>();
+     ```
+
+     **Usage:**
+     ```java
+     Order order = new Order();
+     OrderItem item1 = new OrderItem();
+     item1.setOrder(order);
+     order.getItems().add(item1);
+
+     orderRepository.save(order); // Automatically saves, updates, deletes, or locks `items` as needed
+     ```
+
+### **Summary:**
+Hibernate-specific cascade types provide more granular control over the persistence lifecycle of entities in a Spring Boot application. These cascade types extend the capabilities offered by standard JPA cascade types, enabling more complex and fine-tuned operations, such as entity replication, locking, and orphan deletion. Understanding and using these Hibernate-specific cascade types allows you to manage entity relationships more effectively within the context of your application's data persistence layer.
