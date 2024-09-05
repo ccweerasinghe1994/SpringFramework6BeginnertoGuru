@@ -220,7 +220,11 @@ In this case, `@WithSecurityContext` allows you to define custom authentication 
 
 These two dependencies enable comprehensive security management and testing in a Spring Boot application.
 ## 003 Calling Rest API with Postman and HTTP Basic
+
+![alt text](image.png)
+
 ## 004 Customizing User Name and Password
+
 ## 005 Testing Spring Security with JUnit 5
 ## 006 Spring Security Config - Disable CSRF
 ## 007 Spring Security with Web Application Context
