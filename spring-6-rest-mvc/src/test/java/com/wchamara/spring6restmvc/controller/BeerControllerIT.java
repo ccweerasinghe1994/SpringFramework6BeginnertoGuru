@@ -26,6 +26,8 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -46,7 +48,10 @@ class BeerControllerIT {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
     }
 
 
@@ -55,6 +60,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "TRUE")
@@ -70,7 +76,11 @@ class BeerControllerIT {
     @Test
     void getBeerByName() throws Exception {
 //        let's check the size of the list
-        mockMvc.perform(get(BeerController.BEER_PATH).queryParam("beerName", "IPA"))
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .queryParam("beerName", "IPA")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.size()").value(25));
 //                .andExpect(result -> {
@@ -86,6 +96,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "TRUE")
@@ -103,6 +114,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "FALSE")
@@ -217,6 +229,7 @@ class BeerControllerIT {
 
         MvcResult mvcResult = mockMvc.perform(
                         patch(BeerController.BEER_PATH_ID, beer.getId())
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerMap))

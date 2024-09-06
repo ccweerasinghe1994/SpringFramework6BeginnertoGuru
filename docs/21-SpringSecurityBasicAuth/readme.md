@@ -48,7 +48,27 @@
       - [1. **Testing with Custom Security Context**](#1-testing-with-custom-security-context)
     - [Summary](#summary-2)
   - [006 Spring Security Config - Disable CSRF](#006-spring-security-config---disable-csrf)
+    - [Key Components in the Code:](#key-components-in-the-code)
+    - [Detailed Explanation](#detailed-explanation)
+      - [1. **CSRF Protection**](#1-csrf-protection)
+        - [Example Scenario:](#example-scenario)
+      - [2. **HttpSecurity in Detail**](#2-httpsecurity-in-detail)
+      - [3. **Spring Boot Default Security**](#3-spring-boot-default-security)
+    - [Example Use Case: REST API with CSRF Disabled for API Endpoints](#example-use-case-rest-api-with-csrf-disabled-for-api-endpoints)
+    - [Summary](#summary-3)
   - [007 Spring Security with Web Application Context](#007-spring-security-with-web-application-context)
+    - [Key Components:](#key-components)
+    - [Code Breakdown and Explanation:](#code-breakdown-and-explanation)
+      - [1. **Authorization Configuration with `authorizeHttpRequests()`**:](#1-authorization-configuration-with-authorizehttprequests)
+        - [Example 1:](#example-1)
+        - [Example 2: Custom Authorization](#example-2-custom-authorization)
+      - [2. **HTTP Basic Authentication Configuration**:](#2-http-basic-authentication-configuration)
+        - [Example:](#example)
+      - [3. **CSRF (Cross-Site Request Forgery) Protection**:](#3-csrf-cross-site-request-forgery-protection)
+        - [Example:](#example-1)
+      - [4. **Returning the SecurityFilterChain**:](#4-returning-the-securityfilterchain)
+    - [Full Request Flow Example:](#full-request-flow-example)
+    - [Summary:](#summary-4)
   - [008 HTTP Basic with RestTemplate](#008-http-basic-with-resttemplate)
   - [009 Refactor of RestTemplate Builder Config](#009-refactor-of-resttemplate-builder-config)
   - [010 HTTP Basic with RestTemplate Mock Context](#010-http-basic-with-resttemplate-mock-context)
@@ -668,7 +688,821 @@ In this test, you have complete control over the security context, which allows 
 
 By using these tools, you can ensure your Spring Security configurations work as expected under various authentication and authorization scenarios, ensuring that your application remains secure while responding correctly to user roles and permissions.
 ## 006 Spring Security Config - Disable CSRF
+
+```java
+package com.wchamara.spring6restmvc.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SpringSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http.csrf(
+                httpSecurityCsrfConfigurer -> {
+                    httpSecurityCsrfConfigurer.ignoringRequestMatchers("/api/**");
+                }
+        );
+
+        return http.build();
+    }
+}
+
+```
+
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.config.SpringSecurityConfig;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import com.wchamara.spring6restmvc.service.BeerService;
+import com.wchamara.spring6restmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+//@SpringBootTest
+@WebMvcTest(BeerController.class)
+@Import(SpringSecurityConfig.class)
+class BeerControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    BeerService beerService;
+
+    @Captor
+    ArgumentCaptor<UUID> uuidArgumentCaptor;
+
+    @Captor
+    ArgumentCaptor<BeerDTO> beerArgumentCaptor;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+
+    @Test
+    void getBeerByIdReturnsBeer() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beerDTO));
+
+
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .with(httpBasic("user1", "password"))
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(beerDTO.getId().toString()))
+                .andExpect(jsonPath("$.beerName").value(beerDTO.getBeerName()))
+                .andExpect(jsonPath("$.beerStyle").value(beerDTO.getBeerStyle().toString()))
+                .andExpect(jsonPath("$.upc").value(beerDTO.getUpc()))
+                .andExpect(jsonPath("$.quantityOnHand").value(beerDTO.getQuantityOnHand()))
+                .andExpect(jsonPath("$.price").value(beerDTO.getPrice().toString()))
+                .andExpect(jsonPath("$.createdDate").exists())
+                .andExpect(jsonPath("$.updatedDate").exists());
+        ;
+    }
+
+
+    @Test
+    void getBeerByIdWillReturnNotFoundException() throws Exception {
+
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.empty());
+
+
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH_ID, UUID.randomUUID())
+                                .with(httpBasic("user1", "password"))
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isNotFound());
+    }
+
+
+    @Test
+    void listAllBeersReturnsListOfBeers() throws Exception {
+        given(beerService.listAllBeers(any(), any(), any(), any(), any())).willReturn(beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25));
+
+        mockMvc.perform(
+                        get(
+                                BeerController.BEER_PATH)
+                                .with(httpBasic("user1", "password"))
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content[0].id").exists())
+                .andExpect(jsonPath("$.content[0].beerName").exists())
+                .andExpect(jsonPath("$.content[0].beerStyle").exists())
+                .andExpect(jsonPath("$.content[0].upc").exists())
+                .andExpect(jsonPath("$.content[0].quantityOnHand").exists())
+                .andExpect(jsonPath("$.content[0].price").exists())
+                .andExpect(jsonPath("$.content[0].createdDate").exists())
+                .andExpect(jsonPath("$.content[0].updatedDate").exists());
+    }
+
+    @Test
+    void saveNewBeerReturnsCreated() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(0);
+        beerDTO.setId(null);
+        beerDTO.setVersion(null);
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(1));
+
+        mockMvc.perform(
+                        post(BeerController.BEER_PATH)
+                                .with(httpBasic("user1", "password"))
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+
+    }
+
+    @Test
+    void testCreateNewBeerNullBeerName() throws Exception {
+        BeerDTO beerDTO = BeerDTO.builder().build();
+
+
+        given(beerService.saveNewBeer(any())).willReturn(beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(1));
+
+        ResultActions resultActions = mockMvc.perform(
+                        post(BeerController.BEER_PATH)
+                                .with(httpBasic("user1", "password"))
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isBadRequest());
+
+        System.out.println(resultActions.andReturn().getResponse().getContentAsString());
+
+    }
+
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(0);
+        given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beerDTO));
+
+
+        mockMvc.perform(
+                        put(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerDTO))
+                )
+                .andExpect(status().isNoContent());
+        verify(beerService).updateBeer(any(UUID.class), any(BeerDTO.class));
+    }
+
+    @Test
+    void deleteBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(0);
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.of(beerDTO));
+
+        mockMvc.perform(delete(BeerController.BEER_PATH_ID, beerDTO.getId()))
+                .andExpect(status().isNoContent());
+
+        verify(beerService).deleteBeer(uuidArgumentCaptor.capture());
+
+        assertThat(uuidArgumentCaptor.getValue()).isEqualTo(beerDTO.getId());
+    }
+
+    @Test
+    void patchBeerReturnsNoContent() throws Exception {
+        BeerDTO beerDTO = beerServiceImpl.listAllBeers(null, false, BeerStyle.ALE, 1, 25).getContent().get(0);
+
+        Map<String, Object> beerMap = new HashMap<>();
+
+        beerMap.put("beerName", "New Beer Name");
+
+        mockMvc.perform(
+                        patch(BeerController.BEER_PATH_ID, beerDTO.getId())
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerMap))
+                )
+                .andExpect(status().isNotFound());
+
+//        verify(beerService).patchBeer(uuidArgumentCaptor.capture(), beerArgumentCaptor.capture());
+//        assertThat(uuidArgumentCaptor.getValue()).isEqualTo(beerDTO.getId());
+//        assertThat(beerArgumentCaptor.getValue().getBeerName()).isEqualTo("New Beer Name");
+
+    }
+
+
+}
+```
+
+
+The given code snippet represents a **Spring Security configuration** class using the new approach introduced in Spring Security 5.7 and 6, where `SecurityFilterChain` is used instead of the now-deprecated `WebSecurityConfigurerAdapter`. Let’s break it down step by step, understand how it works, and explore it with examples.
+
+### Key Components in the Code:
+
+1. **`@Configuration` Annotation**:
+   - This marks the class as a configuration class, meaning it will be processed by Spring’s configuration mechanism to define beans and configuration settings. Spring will automatically scan for these configuration classes during startup.
+   
+2. **`SecurityFilterChain` Bean**:
+   - The `SecurityFilterChain` defines the security filters that will apply to incoming HTTP requests. This is a central component in Spring Security's filtering mechanism.
+   - In this example, a custom `SecurityFilterChain` bean is defined using the `securityFilterChain(HttpSecurity http)` method.
+   
+3. **`HttpSecurity`**:
+   - The `HttpSecurity` object is provided by Spring Security and is used to configure various aspects of HTTP security, such as CSRF protection, authorization, authentication, and more.
+
+4. **CSRF Configuration**:
+   - The `http.csrf()` configuration part defines how **CSRF (Cross-Site Request Forgery)** protection is handled in the application.
+   - **`csrf().ignoringRequestMatchers("/api/**")`**: This disables CSRF protection for URLs that start with `/api/`. This is common for RESTful APIs because traditional CSRF attacks are less of a concern in stateless, API-based applications.
+
+### Detailed Explanation
+
+#### 1. **CSRF Protection**
+
+CSRF is an attack where an attacker tricks a user into performing actions they did not intend to perform, typically by forging requests to the server where the user is authenticated. Spring Security enables CSRF protection by default to protect against these kinds of attacks in form-based authentication.
+
+However, in **stateless applications** or **APIs**, CSRF protection is often unnecessary because APIs typically use tokens (like JWT) for authentication, not cookies. This is why many developers choose to **disable** CSRF protection for their API routes.
+
+In the example, CSRF protection is disabled for all requests matching `/api/**` by using:
+
+```java
+httpSecurityCsrfConfigurer.ignoringRequestMatchers("/api/**");
+```
+
+This means that:
+- Any URL that starts with `/api/` will not have CSRF protection.
+- This is suitable for REST APIs where statelessness is a core principle, and there are no sessions or cookies involved.
+
+##### Example Scenario:
+Let’s say you are building a RESTful API with endpoints like:
+- `POST /api/users` – to create a new user.
+- `POST /api/orders` – to create an order.
+
+Since CSRF protection is unnecessary for these API endpoints (due to statelessness and token-based authentication), you can disable CSRF for all `/api/**` routes. The non-API endpoints, like a web application with form submissions, will still have CSRF protection by default.
+
+#### 2. **HttpSecurity in Detail**
+
+The `HttpSecurity` object is used to configure security for the HTTP layer of the application. In the example, only CSRF configuration is included, but Spring Security allows you to configure other security mechanisms like authentication, authorization, and form login.
+
+You could expand the configuration to specify more security settings. For example:
+
+```java
+http
+    .authorizeRequests()
+        .antMatchers("/admin/**").hasRole("ADMIN")
+        .antMatchers("/api/**").permitAll()
+        .anyRequest().authenticated()
+    .and()
+    .formLogin()
+        .loginPage("/login").permitAll()
+    .and()
+    .logout().permitAll();
+```
+
+In this expanded configuration:
+- `/admin/**` URLs are restricted to users with the `ADMIN` role.
+- `/api/**` URLs are open to all users without authentication.
+- Other URLs require the user to be authenticated.
+- A custom login page is configured at `/login`.
+- Logout is permitted for everyone.
+
+#### 3. **Spring Boot Default Security**
+
+When using Spring Boot and Spring Security, the framework applies **default security configurations** if you don’t provide your own. These defaults include enabling CSRF protection and requiring authentication for all requests. By defining a `SecurityFilterChain` bean, you are overriding Spring Boot’s default security configuration and providing custom rules.
+
+### Example Use Case: REST API with CSRF Disabled for API Endpoints
+
+Consider a Spring Boot application that has both a web front-end and a RESTful API. The front-end uses traditional form-based authentication, which requires CSRF protection. However, the API is consumed by mobile or JavaScript clients using token-based authentication (e.g., JWT), which does not require CSRF protection.
+
+Here’s how you might configure security for such a use case:
+
+```java
+@Configuration
+public class SpringSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
+
+        // Authorize requests
+        http
+            .authorizeRequests()
+            .antMatchers("/api/public/**").permitAll()  // Public API
+            .antMatchers("/api/admin/**").hasRole("ADMIN")  // Admin API
+            .antMatchers("/admin/**").hasRole("ADMIN")  // Admin web pages
+            .anyRequest().authenticated()  // All other requests need authentication
+            .and()
+            .httpBasic();  // Use HTTP Basic authentication for simplicity
+
+        return http.build();
+    }
+}
+```
+
+- **CSRF Protection**: Disabled for API routes (`/api/**`).
+- **API Routes**: 
+  - `/api/public/**` is accessible to everyone.
+  - `/api/admin/**` requires an authenticated user with the `ADMIN` role.
+- **Web Routes**: 
+  - `/admin/**` requires the `ADMIN` role.
+  - All other web pages require authentication.
+- **Authentication**: HTTP Basic authentication is used in this example for simplicity, but this can be replaced with more sophisticated mechanisms like JWT or OAuth2.
+
+### Summary
+
+The code provided shows how to configure Spring Security using the `SecurityFilterChain` and `HttpSecurity` objects in Spring Security 6 (and 5.7+). In particular, CSRF protection is disabled for API endpoints, which is a common pattern in stateless applications or token-based authentication systems. 
+
+This configuration ensures:
+- **CSRF Protection**: Disabled for APIs where it’s not needed.
+- **Security Filter Chain**: Custom filters and rules can be added to protect certain URLs, enforce authentication, and define user roles.
+- **Modern Security Practices**: With the deprecation of `WebSecurityConfigurerAdapter`, the use of `SecurityFilterChain` provides more flexibility and modular security configurations.
+
+By customizing the security configuration, you can secure various parts of the application differently depending on their needs (e.g., form-based login for the web front-end, token-based for APIs).
+
 ## 007 Spring Security with Web Application Context
+
+```java
+package com.wchamara.spring6restmvc.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SpringSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Use lambda-style configuration for authorizeHttpRequests
+        http.authorizeHttpRequests(auth -> {
+                    auth.anyRequest().authenticated();
+                })
+                .httpBasic(Customizer.withDefaults())  // Default basic HTTP authentication
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));  // Disable CSRF for API routes
+
+        return http.build();
+    }
+}
+
+```
+
+The provided code configures Spring Security in a Spring Boot application using the `SecurityFilterChain` approach, which is the preferred way in Spring Security 5.7+ and Spring Security 6. This code configures HTTP security for the application, setting up authentication rules, enabling HTTP basic authentication, and handling CSRF (Cross-Site Request Forgery) protection for specific routes.
+
+Let’s break this down and explain each section in detail with examples.
+
+### Key Components:
+
+1. **`SecurityFilterChain` Bean**:
+   - `SecurityFilterChain` defines the security rules that apply to incoming HTTP requests. By configuring a `SecurityFilterChain` bean, you're specifying how requests should be authorized, authenticated, and which protections should be applied (like CSRF).
+   - The `HttpSecurity` object allows you to configure the web-based security at a high level.
+
+2. **Lambda-style Configuration**:
+   - Instead of the traditional method chaining (which has been deprecated), Spring Security 6 prefers lambda-based configurations, which improves readability and clarity by grouping related security configurations together.
+
+### Code Breakdown and Explanation:
+
+#### 1. **Authorization Configuration with `authorizeHttpRequests()`**:
+
+```java
+http.authorizeHttpRequests(auth -> {
+    auth.anyRequest().authenticated();
+});
+```
+
+- **`authorizeHttpRequests()`**: This method is used to configure authorization for HTTP requests. It determines how different endpoints or URL patterns should be protected.
+  
+- **`anyRequest().authenticated()`**: This is the simplest form of authorization. It ensures that **all requests** made to any endpoint of the application require the user to be authenticated.
+
+##### Example 1:
+Suppose you have endpoints like:
+
+```java
+@RestController
+public class MyController {
+
+    @GetMapping("/public")
+    public String publicEndpoint() {
+        return "This is a public endpoint";
+    }
+
+    @GetMapping("/private")
+    public String privateEndpoint() {
+        return "This is a private endpoint, login required";
+    }
+}
+```
+
+With the `anyRequest().authenticated()` rule, **both `/public` and `/private`** will require authentication. Even though the `/public` endpoint is supposed to be public, this rule forces the user to authenticate before accessing any endpoint.
+
+##### Example 2: Custom Authorization
+If you wanted to make `/public` accessible without authentication, you could adjust the configuration like this:
+
+```java
+http.authorizeHttpRequests(auth -> {
+    auth.antMatchers("/public").permitAll();  // Allow public access
+    auth.anyRequest().authenticated();  // All other requests require authentication
+});
+```
+
+Now, the `/public` endpoint will be accessible without logging in, while `/private` and other endpoints still require authentication.
+
+#### 2. **HTTP Basic Authentication Configuration**:
+
+```java
+.httpBasic(Customizer.withDefaults())
+```
+
+- **HTTP Basic Authentication** is a simple and widely used authentication mechanism. It requires the user to provide a username and password in the request’s header, and Spring Security will authenticate the user using this information.
+  
+- **`Customizer.withDefaults()`**: This applies the default configuration for HTTP Basic authentication. By using the default customizer, no additional configuration is needed, and Spring Security will automatically provide basic authentication dialogs for browsers and handle authentication based on the username and password provided.
+
+##### Example:
+When a user tries to access a protected endpoint like `/private`, they will be prompted with a browser dialog box asking for a username and password. If the correct credentials are provided, access is granted.
+
+Example of HTTP Basic Authentication request:
+
+```http
+GET /private HTTP/1.1
+Host: localhost:8080
+Authorization: Basic dXNlcjpwYXNzd29yZA==  (Base64-encoded "user:password")
+```
+
+If credentials are incorrect or not provided, the response will be:
+
+```http
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="Realm"
+```
+
+#### 3. **CSRF (Cross-Site Request Forgery) Protection**:
+
+```java
+.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+```
+
+- **CSRF** is an attack that tricks users into performing actions they didn’t intend. Spring Security enables CSRF protection by default for non-GET requests (like POST, PUT, DELETE) to ensure that malicious actors cannot forge requests on behalf of authenticated users.
+  
+- **Disabling CSRF for APIs**: In this case, CSRF protection is **disabled** for any routes that start with `/api/`. This is a common practice for stateless APIs (especially REST APIs), where sessions are not used, and token-based authentication (e.g., JWT) is typically employed.
+
+##### Example:
+Assume your application has API endpoints like:
+
+```java
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+
+    @PostMapping("/data")
+    public String postData() {
+        return "Data posted!";
+    }
+}
+```
+
+If CSRF protection is not disabled for the `/api/**` endpoints, every time you try to POST data to `/api/data`, Spring Security would expect a CSRF token to be included in the request body or header. However, since APIs are often stateless (not session-based), it’s common to disable CSRF for API routes, as shown in the configuration.
+
+If CSRF were enabled and you sent a POST request without a valid CSRF token, you would receive:
+
+```http
+HTTP/1.1 403 Forbidden
+```
+
+But since it is disabled for `/api/**`, the request will proceed as expected.
+
+#### 4. **Returning the SecurityFilterChain**:
+
+```java
+return http.build();
+```
+
+- After configuring all the security rules (authorization, authentication, CSRF), calling `http.build()` creates the `SecurityFilterChain` that Spring Security will apply to incoming HTTP requests.
+- This chain contains the series of filters (like CSRF filters, authentication filters, etc.) that will intercept and handle each HTTP request before it reaches the controller.
+
+### Full Request Flow Example:
+
+Here’s how the configuration behaves when you make requests to your application:
+
+1. **Accessing `/public` (if configured as public)**:
+   - Since it's marked as public (e.g., using `permitAll()`), no authentication is required, and the request is successful.
+
+   ```http
+   GET /public HTTP/1.1
+   Response: 200 OK
+   Body: "This is a public endpoint"
+   ```
+
+2. **Accessing `/private` (or any other protected endpoint)**:
+   - A user tries to access a protected resource like `/private`.
+   - The request is intercepted by Spring Security, and since the request is authenticated, the user is prompted for credentials via HTTP Basic Authentication.
+   - If the correct username and password are provided, the request proceeds, and access is granted.
+   
+   ```http
+   GET /private HTTP/1.1
+   Authorization: Basic dXNlcjpwYXNzd29yZA== (user:password)
+   Response: 200 OK
+   Body: "This is a private endpoint"
+   ```
+
+3. **Posting to `/api/data`**:
+   - CSRF protection is disabled for the `/api/**` routes, so POST requests can be made without providing a CSRF token.
+   - The data is successfully posted to the server.
+
+   ```http
+   POST /api/data HTTP/1.1
+   Body: { "data": "sample" }
+   Response: 200 OK
+   Body: "Data posted!"
+   ```
+
+### Summary:
+
+- **Lambda-based Configuration**: In Spring Security 6, security rules are configured using a lambda-style configuration, which is clearer and more modular.
+- **Authorization**: The `authorizeHttpRequests()` method allows you to specify which endpoints require authentication and which are publicly accessible.
+- **Basic Authentication**: This configuration uses HTTP Basic authentication, which requires the client to provide credentials in the HTTP request header.
+- **CSRF**: Cross-Site Request Forgery protection is disabled for API routes (`/api/**`), which is common for stateless APIs.
+
+This configuration provides a simple, secure structure for applications that have both public and protected routes, along with API endpoints that don't require CSRF protection.
+
+```java
+package com.wchamara.spring6restmvc.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wchamara.spring6restmvc.entities.Beer;
+import com.wchamara.spring6restmvc.model.BeerDTO;
+import com.wchamara.spring6restmvc.model.BeerStyle;
+import com.wchamara.spring6restmvc.repositories.BeerRepository;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+class BeerControllerIT {
+
+    @Autowired
+    BeerController beerController;
+    @Autowired
+    ObjectMapper objectMapper;
+    MockMvc mockMvc;
+    @Autowired
+    WebApplicationContext webApplicationContext;
+    @Autowired
+    private BeerRepository beerRepository;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
+    }
+
+
+    @Test
+    void testListOfYoursWithPagination() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .queryParam("beerName", "IPA")
+                                .queryParam("beerStyle", BeerStyle.IPA.name())
+                                .queryParam("showInventory", "TRUE")
+                                .queryParam("pageNumber", "2")
+                                .queryParam("pageSize", "50")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.size()").value(50))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isNotEmpty())
+        ;
+    }
+
+    @Test
+    void getBeerByName() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .queryParam("beerName", "IPA")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.size()").value(25));
+//                .andExpect(result -> {
+//                    String content = result.getResponse().getContentAsString();
+//                    List<BeerDTO> beerDTOS = objectMapper.readValue(content, List.class);
+//                    assertThat(beerDTOS.size()).isEqualTo(336);
+//                });
+
+    }
+
+    @Test
+    void getBeerByNameQueryParameter() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .queryParam("beerName", "IPA")
+                                .queryParam("beerStyle", BeerStyle.IPA.name())
+                                .queryParam("showInventory", "TRUE")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.size()").value(25))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isNotEmpty())
+        ;
+
+
+    }
+
+    @Test
+    void getBeerByNameQueryParameterAndShowInventoryFalse() throws Exception {
+//        let's check the size of the list
+        mockMvc.perform(
+                        get(BeerController.BEER_PATH)
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .queryParam("beerName", "IPA")
+                                .queryParam("beerStyle", BeerStyle.IPA.name())
+                                .queryParam("showInventory", "FALSE")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.size()").value(25))
+                .andExpect(jsonPath("$.content[0].quantityOnHand").isEmpty())
+        ;
+
+
+    }
+
+
+    @Test
+    void testListAllBeers() {
+        Page<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
+
+        assertEquals(25, beerDTOS.getContent().size());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testEmptyListBeers() {
+        beerRepository.deleteAll();
+        Page<BeerDTO> beerDTOS = beerController.listAllBeers(null, false, null, 25, 1);
+        assertThat(beerDTOS.getContent().size()).isEqualTo(0);
+    }
+
+    @Test
+    void getBeerById() {
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        assertThat(beerDTO).isNotNull();
+    }
+
+    @Test
+    void beerByIdNotFound() {
+        assertThrows(NotFoundException.class, () -> beerController.getBeerById(UUID.randomUUID()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testNewBeerSuccess() {
+
+        BeerDTO newBeer1 = BeerDTO.builder().beerName("New Beer").build();
+        ResponseEntity responseEntity = beerController.saveNewBeer(newBeer1);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
+        assertThat(responseEntity.getHeaders().get("Location")).isNotNull();
+
+        String[] location = responseEntity.getHeaders().getLocation().getPath().split("/");
+        UUID savedId = UUID.fromString(location[location.length - 1]);
+
+        Beer savedBeer = beerRepository.findById(savedId).get();
+        assertThat(savedBeer.getBeerName()).isEqualTo("New Beer");
+        assertThat(savedBeer.getId()).isEqualTo(savedId);
+
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testUpdateBeer() {
+
+        BeerDTO beerDTO = beerController.getBeerById(beerRepository.findAll().get(0).getId());
+        beerDTO.setBeerName("Updated Beer");
+        ResponseEntity responseEntity = beerController.updateBeer(beerDTO.getId(), beerDTO);
+
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+
+        Beer updatedBeer = beerRepository.findById(beerDTO.getId()).get();
+        assertThat(updatedBeer.getBeerName()).isEqualTo("Updated Beer");
+    }
+
+    @Test
+    void testUpdateBeerNotFound() {
+        BeerDTO beerDTO = BeerDTO.builder().beerName("Updated Beer").build();
+        assertThrows(NotFoundException.class, () -> beerController.updateBeer(UUID.randomUUID(), beerDTO));
+    }
+
+    @Test
+    void testDeleteBeer() {
+        UUID id = beerRepository.findAll().get(0).getId();
+        ResponseEntity responseEntity = beerController.deleteBeer(id);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
+        assertThat(beerRepository.findById(id)).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testDeleteBeerNotFound() {
+        assertThrows(NotFoundException.class, () -> beerController.deleteBeer(UUID.randomUUID()));
+    }
+
+
+    @Test
+    void updateBeerReturnsNoContent() throws Exception {
+        Beer beer = beerRepository.findAll().get(0);
+
+        Map<String, Object> beerMap = Map.of(
+                "beerName", "New Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew BeNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer NameNew Beer Name",
+                "beerStyle", "New Beer Style",
+                "price", 12.99,
+                "quantityOnHand", 100
+        );
+
+
+        MvcResult mvcResult = mockMvc.perform(
+                        patch(BeerController.BEER_PATH_ID, beer.getId())
+                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(beerMap))
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString());
+    }
+
+
+}
+```
+
 ## 008 HTTP Basic with RestTemplate
 ## 009 Refactor of RestTemplate Builder Config
 ## 010 HTTP Basic with RestTemplate Mock Context
