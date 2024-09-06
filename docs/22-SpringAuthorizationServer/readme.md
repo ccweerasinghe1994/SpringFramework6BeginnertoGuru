@@ -2377,8 +2377,211 @@ In a real-world application, you might store registered clients in a database, a
 3. **User Logs In**: The user logs in with their credentials (e.g., username and password).
 4. **User Consents to Scopes**: The user is
 
+ shown a consent screen, asking them to allow the client to access their profile information.
+5. **Authorization Code Issued**: After successful login and consent, the Authorization Server redirects the user back to the client’s **redirect URI**, along with an **authorization code**.
+6. **Token Exchange**: The client exchanges the authorization code for an **access token** and a **refresh token**.
+7. **Accessing Resources**: The client can now use the access token to request the user’s profile information from a Resource Server.
+8. **Token Refresh**: When the access token expires, the client can use the refresh token to request a new access token without requiring the user to log in again.
+
+---
+
+### Conclusion
+
+This code defines an **OIDC client** using Spring Security’s **RegisteredClient** class and stores it in an **in-memory repository**. The client is configured to use the **Authorization Code** flow, with support for **refresh tokens**, and it includes settings for handling user consent. It also supports **OpenID Connect (OIDC)**, allowing the client to request user identity information through scopes like `openid` and `profile`. This setup is ideal for development and testing but can be adapted for production with persistent storage (e.g., a database).
+
 
 ## 009 Create JWK Source
+
+```java
+@Bean
+    public JWKSource<SecurityContext> jwkSource() {
+        KeyPair keyPair = generateRsaKey();
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .keyID(UUID.randomUUID().toString())
+                .build();
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return new ImmutableJWKSet<>(jwkSet);
+    }
+
+    private static KeyPair generateRsaKey() {
+        KeyPair keyPair;
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            keyPair = keyPairGenerator.generateKeyPair();
+        }
+        catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
+        return keyPair;
+    }
+```
+
+This `SecurityConfig` class configures an **OAuth 2.0 Authorization Server** with a **JWT-based** signing mechanism using **RSA keys**. The primary role of this class is to securely sign **JSON Web Tokens (JWT)** issued by the Authorization Server and to provide a way for external systems (such as Resource Servers) to verify these tokens. It does this by creating a **JWKSource** that holds the public key necessary for verifying tokens.
+
+Here’s a detailed breakdown of the code, explaining each component and its role with examples.
+
+---
+
+### Overview of JWT and JWKSource
+
+- **JWT (JSON Web Token)**: A compact, URL-safe token format that is often used in OAuth 2.0 systems for transferring information between parties in a secure, self-contained way. JWTs are commonly used for access tokens and ID tokens.
+  
+- **JWKSource (JSON Web Key Source)**: In the context of JWT, a **JWKSource** is a set of **JSON Web Keys (JWKs)** that contains the cryptographic keys used to sign and verify JWTs. These keys can be public keys (used for verification) and private keys (used for signing).
+
+- **RSA Encryption**: In this example, **RSA** is used to generate a public/private key pair. The **private key** is used to sign the tokens, while the **public key** is shared via the **JWKSet**, allowing external systems to verify the token signatures.
+
+### Breakdown of the Code
+
+#### 1. **`JWKSource<SecurityContext>` Bean**: Creating the JWK Source
+
+```java
+@Bean
+public JWKSource<SecurityContext> jwkSource() {
+    KeyPair keyPair = generateRsaKey();
+    RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+    RSAKey rsaKey = new RSAKey.Builder(publicKey)
+            .privateKey(privateKey)
+            .keyID(UUID.randomUUID().toString())
+            .build();
+    JWKSet jwkSet = new JWKSet(rsaKey);
+    return new ImmutableJWKSet<>(jwkSet);
+}
+```
+
+This method defines a **Spring Bean** that returns a **JWKSource**, which is required for JWT signing and verification. It sets up a **public-private key pair** using **RSA encryption**. Let’s break it down:
+
+##### a. **Generate RSA Key Pair**
+
+```java
+KeyPair keyPair = generateRsaKey();
+RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+```
+
+- This generates an **RSA key pair** using the helper method `generateRsaKey()`. The RSA key pair consists of:
+  - **Public Key** (`RSAPublicKey`): This will be used for **verifying** JWT tokens.
+  - **Private Key** (`RSAPrivateKey`): This will be used for **signing** JWT tokens.
+
+##### b. **Create RSAKey Object**
+
+```java
+RSAKey rsaKey = new RSAKey.Builder(publicKey)
+        .privateKey(privateKey)
+        .keyID(UUID.randomUUID().toString())
+        .build();
+```
+
+- An **`RSAKey`** is constructed using the public and private keys. This object is part of the **Nimbus JOSE + JWT** library, which provides tools for working with cryptographic keys, signing, and verifying JWTs.
+- **`keyID(UUID.randomUUID().toString())`**: Each key is assigned a unique identifier (`kid`), generated using `UUID`. The key ID helps when verifying tokens, as it allows systems to identify which key was used to sign the token. This is useful when multiple keys are in rotation (for example, during key rollover).
+
+##### c. **Create JWKSet**
+
+```java
+JWKSet jwkSet = new JWKSet(rsaKey);
+```
+
+- **JWKSet**: This is a collection of **JWK (JSON Web Keys)**. In this case, it contains the single RSA key we just generated. In real-world scenarios, you could have multiple keys in the set, allowing for key rotation or supporting multiple algorithms.
+
+##### d. **Return Immutable JWKSet**
+
+```java
+return new ImmutableJWKSet<>(jwkSet);
+```
+
+- **ImmutableJWKSet**: This is a **JWKSource** that holds an immutable set of JWKs. Once created, the JWKSet cannot be changed. This is essential for security, as it ensures that the cryptographic keys are not modified at runtime.
+- This **JWKSource** is then used by the **Authorization Server** to sign and verify JWT tokens.
+
+#### Example Use Case:
+
+When the Authorization Server issues a JWT token, it uses the **private key** to sign the token. The resulting JWT has three parts:
+1. **Header**: Contains information about the signing algorithm (e.g., RS256) and the key ID (`kid`).
+2. **Payload**: Contains the claims (e.g., user information, token expiration).
+3. **Signature**: Generated using the private key, ensuring the token’s authenticity.
+
+When another service (like a **Resource Server**) receives this JWT, it fetches the **public key** from the **JWKSet** (typically exposed through a JWKS endpoint) and verifies the signature to ensure the token is valid.
+
+---
+
+#### 2. **The `generateRsaKey()` Method**: Generating the RSA Key Pair
+
+```java
+private static KeyPair generateRsaKey() {
+    KeyPair keyPair;
+    try {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);  // Key size of 2048 bits
+        keyPair = keyPairGenerator.generateKeyPair();
+    }
+    catch (Exception ex) {
+        throw new IllegalStateException(ex);
+    }
+    return keyPair;
+}
+```
+
+##### Key Points:
+
+1. **Key Pair Generation**:
+   - The `KeyPairGenerator.getInstance("RSA")` generates an RSA key pair.
+   - The key size is set to **2048 bits**, which is a commonly used key length for RSA and is considered secure for most applications.
+   
+2. **Exception Handling**:
+   - If the key generation fails (e.g., due to an issue with the cryptography provider), the method throws an `IllegalStateException`.
+
+3. **Return Key Pair**:
+   - The method returns a **KeyPair** object, which contains both the **public key** and the **private key**.
+
+##### Example Scenario:
+
+When an application initializes, the `generateRsaKey()` method is called to generate a new RSA key pair. The **private key** will be kept securely within the Authorization Server and used to sign tokens. The **public key** will be made available to other services via a **JWKS endpoint**.
+
+---
+
+### Practical Example: OAuth 2.0 Authorization Server Flow with RSA Signed JWTs
+
+1. **User Authentication**:
+   - A client (e.g., a web or mobile app) sends a user to the **Authorization Server** for authentication. The user logs in, and the Authorization Server issues an **access token** (a JWT) signed using the **private key** from the RSA key pair.
+
+2. **JWT Token Signing**:
+   - The JWT token is signed with the **private key**. This ensures the token is tamper-proof. Any modification to the token’s content (e.g., changing claims) would invalidate the signature.
+
+   Example JWT Header:
+   ```json
+   {
+     "alg": "RS256",
+     "typ": "JWT",
+     "kid": "1234-5678-90ab-cdef"  // Key ID for identifying the key used to sign
+   }
+   ```
+
+3. **Token Verification (Resource Server)**:
+   - The client sends the JWT token to a **Resource Server** (e.g., an API) to access protected resources.
+   - The Resource Server retrieves the **public key** from the Authorization Server’s **JWKS endpoint** (which is backed by the `jwkSource()` method).
+   - The Resource Server verifies the JWT’s signature using the **public key** from the JWKS. If the signature is valid, the token is considered authentic, and the user is allowed to access the resource.
+
+---
+
+### Why RSA and JWKS?
+
+1. **Security**: The private key is only known to the Authorization Server, ensuring that only the server can sign tokens. The public key is shared via the JWKS, allowing external services (like Resource Servers) to verify the tokens without needing to access the private key.
+
+2. **Key Rotation**: By assigning a **key ID (kid)** to each key, the Authorization Server can rotate keys (i.e., generate new RSA key pairs) without breaking existing JWT tokens. The `kid` ensures that external services can identify which key was used to sign a specific token.
+
+3. **Decoupling of Signing and Verification**: The Authorization Server signs tokens, while multiple Resource Servers can independently verify those tokens using the public key exposed via the JWKS. This separation of duties makes the system more scalable and secure.
+
+---
+
+### Conclusion
+
+This `SecurityConfig` class configures the **RSA-based JWT signing** for an OAuth 2.0 Authorization Server. It generates a public/private key pair using RSA and provides the public key through a **JWKSource** that is used by external services to verify JWT tokens. The private key is kept secure, and only the Authorization Server uses it to sign tokens. This setup ensures that tokens issued by the
+
+ server are secure, tamper-proof, and verifiable by any system that has access to the public key. This configuration is foundational for building secure, token-based systems using OAuth 2.0.
+
 ## 010 Create JwtDecoder
 ## 011 Set Authorization Server Settings
 ## 012 Get Authorization Token Using Postman
