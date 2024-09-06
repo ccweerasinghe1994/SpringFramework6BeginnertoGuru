@@ -2027,6 +2027,169 @@ This `SecurityConfig` class configures Spring Security for both the **OAuth 2.0 
 By separating security configurations into two distinct filter chains, this setup ensures the proper handling of OAuth 2.0 endpoints while also securing other areas of the application with Spring Security's default mechanisms.
 
 ## 007 Create User Details Service
+
+```java
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails userDetails = User.builder()
+                .username("user")
+                .password(passwordEncoder().encode("password"))
+                .roles("USER")
+                .build();
+
+        return new InMemoryUserDetailsManager(userDetails);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+```
+The provided code defines a Spring Security configuration for managing **user authentication** in a **Spring Boot** application. It uses **in-memory authentication**, which is suitable for testing and development environments. This configuration consists of two beans: one for managing user details (`UserDetailsService`) and one for encoding passwords (`PasswordEncoder`).
+
+Let's explain each part in detail with examples:
+
+### 1. **UserDetailsService Bean**
+
+```java
+@Bean
+public UserDetailsService userDetailsService() {
+    UserDetails userDetails = User.builder()
+            .username("user")
+            .password(passwordEncoder().encode("password"))
+            .roles("USER")
+            .build();
+
+    return new InMemoryUserDetailsManager(userDetails);
+}
+```
+
+#### Explanation:
+
+- **`UserDetailsService`**:
+  - The `UserDetailsService` is a core Spring Security interface that defines how the application retrieves user information (like username, password, roles) for authentication purposes.
+  - In this case, it uses an **in-memory** implementation (`InMemoryUserDetailsManager`), which stores user details directly in memory. This is useful for development and testing but not suitable for production systems, where a database-backed user store would be preferred.
+
+- **`User.builder()`**:
+  - The `User.builder()` method creates a `UserDetails` object. The `UserDetails` object holds the information about the user that Spring Security uses for authentication and authorization.
+  - In this example, a single user with the following attributes is defined:
+    - **Username**: `"user"`
+    - **Password**: `"password"` (which is encoded using a password encoder).
+    - **Role**: `"USER"` (which defines the user’s permissions in the application).
+
+- **Password Encoding**:
+  - The password is encoded using a `PasswordEncoder` (which is defined as a separate bean, explained later). Encoding passwords is a critical security practice because storing plaintext passwords is highly insecure.
+  - In this example, `"password"` is passed through `passwordEncoder().encode("password")`, meaning that the password is hashed before being stored in memory.
+
+- **`InMemoryUserDetailsManager`**:
+  - This class implements the `UserDetailsService` interface, managing users in memory.
+  - It is initialized with a list of `UserDetails` objects, so when users log in, Spring Security checks the credentials against the stored in-memory user.
+
+#### Example Scenario:
+Let’s assume your application is using this configuration. When a user tries to log in with the username `"user"` and password `"password"`, here’s what happens:
+1. The application receives the login request.
+2. Spring Security uses the `UserDetailsService` to retrieve the user details for `"user"`.
+3. The `InMemoryUserDetailsManager` returns the stored user details for `"user"`, including the encoded password.
+4. Spring Security then compares the **encoded password** stored in memory with the **encoded password** provided by the user.
+5. If the passwords match, the user is authenticated and granted access to the application with the role `"USER"`.
+
+---
+
+### 2. **PasswordEncoder Bean**
+
+```java
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+```
+
+#### Explanation:
+
+- **`PasswordEncoder`**:
+  - A `PasswordEncoder` is responsible for encoding (hashing) passwords before storing them and verifying passwords during login.
+  - It is crucial for security, as it ensures that passwords are not stored in plaintext. Instead, they are hashed so that even if the database is compromised, the attacker cannot easily retrieve the original passwords.
+  
+- **`BCryptPasswordEncoder`**:
+  - `BCryptPasswordEncoder` is a widely used implementation of the `PasswordEncoder` interface, based on the **BCrypt hashing function**.
+  - **BCrypt** is a one-way hashing function designed specifically for password hashing. It is considered secure because it:
+    - Includes a **salt** (a random value) to ensure that even identical passwords result in different hashes, preventing **rainbow table attacks**.
+    - Is **slow by design**, meaning it takes a relatively long time to compute the hash, which helps defend against **brute force attacks**.
+
+#### Example of How `BCryptPasswordEncoder` Works:
+
+1. **Password Encoding**:
+   - When you define the user with the password `"password"`, the `passwordEncoder().encode("password")` method hashes it before storing it.
+   
+   Example of a hashed password:
+   ```plaintext
+   $2a$10$8bJ8aOJdf6W1F3Z7UvZ85.dXNMbFqmqsw1XWYO0Iq8BXnb4XW7fMi
+   ```
+   This string is the hashed version of `"password"`, which is what will be stored in memory.
+
+2. **Password Verification**:
+   - When a user logs in, Spring Security uses the `PasswordEncoder` to compare the encoded (hashed) password with the one provided by the user at login.
+   - If the hashed version of the password provided by the user matches the stored hash, the user is authenticated.
+
+#### Example Scenario:
+Imagine you’re logging into an application using the username `"user"` and the password `"password"`. Here’s what happens:
+1. When you attempt to log in, Spring Security takes the password you provided (`"password"`) and passes it through the `BCryptPasswordEncoder.encode()` method.
+2. Spring Security compares the newly hashed password with the hashed password stored in memory (`$2a$10$...`).
+3. If the two hashed values match, authentication is successful, and you are granted access to the application as a `"USER"`.
+
+---
+
+### Example Use Case
+
+Let’s build a simple example using this setup:
+
+#### Scenario:
+You are developing a Spring Boot application that requires basic login functionality. You want to secure access to certain endpoints and authenticate users with predefined credentials stored in memory for testing purposes.
+
+#### Step-by-Step Flow:
+
+1. **User Requests a Secured Page**:
+   - The user navigates to a secured page in the application (e.g., `/dashboard`).
+   - Spring Security intercepts the request and checks whether the user is authenticated.
+
+2. **User is Redirected to the Login Page**:
+   - If the user is not authenticated, Spring Security redirects them to the login page where they can enter their credentials.
+
+3. **User Provides Credentials**:
+   - The user enters the username `"user"` and password `"password"`.
+
+4. **Password Verification**:
+   - Spring Security retrieves the user details from the `InMemoryUserDetailsManager`.
+   - It compares the provided password (after hashing it with `BCrypt`) with the stored hash.
+
+5. **Authentication Success**:
+   - If the passwords match, the user is authenticated and granted access to the secured page with the role `"USER"`.
+
+---
+
+### Benefits of This Approach:
+
+1. **In-Memory User Management**:
+   - **Simplicity**: Using `InMemoryUserDetailsManager` is easy to set up and is ideal for testing and development environments.
+   - **No Database Required**: You don’t need a database or external storage for user details.
+
+2. **Password Security**:
+   - **BCrypt**: Using `BCryptPasswordEncoder` ensures that passwords are hashed securely with random salts, making it resistant to common attacks like rainbow table and brute force attacks.
+   - **Best Practices**: This approach aligns with security best practices by avoiding plaintext password storage and using a strong hashing algorithm.
+
+3. **Modular Design**:
+   - You can easily switch from in-memory authentication to a database-backed authentication system (e.g., using `JdbcUserDetailsManager` or `UserDetailsService` with a custom database) without changing how passwords are encoded and verified.
+
+---
+
+### Conclusion
+
+This configuration defines a simple **in-memory user authentication** mechanism in Spring Security, using `BCryptPasswordEncoder` for secure password hashing. It allows you to:
+- Securely define users with roles in memory for testing or development purposes.
+- Hash and validate passwords securely using **BCrypt**.
+- Easily transition to more complex authentication mechanisms (like database-backed authentication) without changing the password encoding logic.
+
+By using `BCryptPasswordEncoder`, you ensure that passwords are stored and handled securely, making this setup suitable for building secure, production-grade applications once connected to a proper user storage mechanism (like a database).
 ## 008 Add Registered Client Repository
 ## 009 Create JWK Source
 ## 010 Create JwtDecoder
