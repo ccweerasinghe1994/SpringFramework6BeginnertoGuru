@@ -2191,6 +2191,193 @@ This configuration defines a simple **in-memory user authentication** mechanism 
 
 By using `BCryptPasswordEncoder`, you ensure that passwords are stored and handled securely, making this setup suitable for building secure, production-grade applications once connected to a proper user storage mechanism (like a database).
 ## 008 Add Registered Client Repository
+```java
+    @Bean
+    public RegisteredClientRepository registeredClientRepository() {
+        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("oidc-client")
+                .clientSecret("{noop}secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+                .postLogoutRedirectUri("http://127.0.0.1:8080/")
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .build();
+
+        return new InMemoryRegisteredClientRepository(oidcClient);
+    }
+```
+
+This method defines a **RegisteredClientRepository** bean in a Spring Boot application, which is responsible for managing **OAuth 2.0 clients** that interact with the **Authorization Server**. Specifically, this setup defines an **OIDC (OpenID Connect) client** that uses the **Authorization Code** and **Refresh Token** grant types to interact with the server for authentication and authorization.
+
+Let’s go step by step to explain the code in detail, along with practical examples.
+
+### What is a Registered Client?
+
+A **Registered Client** is a representation of a third-party application (client) that will interact with your **OAuth 2.0 Authorization Server**. This could be a mobile app, a web app, or any other system that needs to authenticate users and access protected resources on behalf of those users.
+
+In the OpenID Connect (OIDC) flow, the client typically authenticates a user via the Authorization Server, retrieves an **ID token** (for identity verification), and possibly retrieves an **access token** (for accessing resources).
+
+---
+
+### Code Breakdown
+
+```java
+@Bean
+public RegisteredClientRepository registeredClientRepository() {
+    RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("oidc-client")
+            .clientSecret("{noop}secret")
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+            .postLogoutRedirectUri("http://127.0.0.1:8080/")
+            .scope(OidcScopes.OPENID)
+            .scope(OidcScopes.PROFILE)
+            .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+            .build();
+
+    return new InMemoryRegisteredClientRepository(oidcClient);
+}
+```
+
+---
+
+### 1. **Client Registration (RegisteredClient)**
+
+#### a. **UUID for Client ID**:
+```java
+RegisteredClient.withId(UUID.randomUUID().toString())
+```
+- The `RegisteredClient.withId(UUID.randomUUID().toString())` method generates a **unique client identifier**. The `UUID` ensures that each client registered with the Authorization Server has a unique identifier. This ID is used internally by the server to manage and track registered clients.
+
+#### b. **Client ID and Secret**:
+```java
+.clientId("oidc-client")
+.clientSecret("{noop}secret")
+```
+- **Client ID**: This is the **public identifier** for the client. It is sent along with the authorization request to identify which application is trying to authenticate users. In this case, the client ID is `"oidc-client"`.
+  
+- **Client Secret**: The client secret (`"secret"`) is used as part of the **authentication** process when the client interacts with the Authorization Server. The secret is only known by the client and the server.
+  - The `"{noop}secret"` uses the `{noop}` prefix, which means the client secret is stored **without encoding**. This is fine for development, but in production, you should encode the client secret using something like **BCrypt** for better security.
+
+#### c. **Client Authentication Method**:
+```java
+.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+```
+- This defines how the client will authenticate with the **Authorization Server** when making requests (e.g., for obtaining tokens). In this case, **Client Secret Basic** authentication is used, meaning that the client ID and client secret will be passed via the HTTP `Authorization` header in Base64-encoded format.
+  
+#### Example:
+In a typical OAuth 2.0 interaction, the client sends the following header to authenticate with the server:
+```
+Authorization: Basic Base64Encode(clientId:clientSecret)
+```
+For example:
+```
+Authorization: Basic b2lkYy1jbGllbnQ6c2VjcmV0
+```
+
+---
+
+### 2. **Authorization Grant Types**
+
+```java
+.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+```
+
+- **Authorization Code Grant Type**: This is the most common OAuth 2.0 flow used by web and mobile applications to obtain an **access token** on behalf of a user. In this flow:
+  - The user is redirected to the Authorization Server to log in.
+  - After successful login, the client receives an **authorization code**, which it exchanges for an **access token**.
+  - This flow ensures that the client never sees the user's credentials directly.
+  
+- **Refresh Token Grant Type**: This allows the client to request a new **access token** after the original token expires, without requiring the user to log in again. This is especially useful for long-lived sessions or background operations.
+
+#### Example Scenario:
+1. A user is logging into an app that uses this **OIDC client**.
+2. The client redirects the user to the Authorization Server's login page.
+3. After login, the client exchanges the authorization code for an **access token** and a **refresh token**.
+4. When the access token expires, the client can use the refresh token to get a new access token without requiring the user to log in again.
+
+---
+
+### 3. **Redirect URIs**
+
+```java
+.redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+.postLogoutRedirectUri("http://127.0.0.1:8080/")
+```
+
+- **Redirect URI**: This is the URI to which the Authorization Server redirects the user after they successfully authenticate. In this case, the user will be redirected to `http://127.0.0.1:8080/login/oauth2/code/oidc-client` after logging in. The client then exchanges the authorization code for an access token at this endpoint.
+  
+  The redirect URI must exactly match the one registered in the client. If the URI does not match, the authorization request will fail as a security precaution.
+
+- **Post Logout Redirect URI**: This URI is where the user will be redirected after they log out. Once the user logs out from the Authorization Server, they are taken back to `http://127.0.0.1:8080/`.
+
+#### Example Scenario:
+- After successful login, the user is redirected to `http://127.0.0.1:8080/login/oauth2/code/oidc-client` where the client receives the authorization code.
+- After logging out, the user is redirected to `http://127.0.0.1:8080/`, which could be the homepage of the application.
+
+---
+
+### 4. **Scopes**
+
+```java
+.scope(OidcScopes.OPENID)
+.scope(OidcScopes.PROFILE)
+```
+
+- **OIDC Scopes**: In the context of OpenID Connect (OIDC), **scopes** define what information the client is requesting from the Authorization Server. In this example:
+  - **`OidcScopes.OPENID`**: This is a required scope for OpenID Connect, meaning that the client is requesting an **ID token** (in addition to any access tokens).
+  - **`OidcScopes.PROFILE`**: This scope allows the client to request the user's profile information (e.g., name, email, etc.).
+  
+#### Example Scenario:
+- When the client requests authentication, it asks for these scopes (`openid` and `profile`).
+- If the user consents, the **ID token** issued to the client will include information from the user’s profile, like their name and email.
+
+---
+
+### 5. **Client Settings**
+
+```java
+.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+```
+
+- **Client Settings**: These settings control how the client behaves in the authorization flow.
+  - **`requireAuthorizationConsent(true)`**: This setting ensures that the user must explicitly **consent** to the scopes requested by the client during the authorization process. For example, if the client requests access to the user’s profile information, the user will be shown a consent page where they can approve or deny this request.
+
+#### Example Scenario:
+When a user logs in, they are shown a screen that lists what information the client is requesting (e.g., "This app wants access to your profile information"). The user must click **Allow** to proceed.
+
+---
+
+### 6. **InMemoryRegisteredClientRepository**
+
+```java
+return new InMemoryRegisteredClientRepository(oidcClient);
+```
+
+- **InMemoryRegisteredClientRepository**: This is a simple, in-memory store for registered clients. It holds the details of the registered client (`oidcClient`) and provides methods to retrieve the client by its client ID.
+  
+- **In-Memory Storage**: This approach is suitable for development and testing purposes. In a production environment, you would typically store clients in a database or another persistent store, like `JdbcRegisteredClientRepository`.
+
+#### Example:
+In a real-world application, you might store registered clients in a database, allowing multiple applications to register and authenticate users. For now, in-memory storage simplifies development since you don’t need an external database to store clients.
+
+---
+
+### Full Example Scenario: OIDC Flow with Authorization Code and Refresh Tokens
+
+1. **User Visits Application**: A user accesses a client application (e.g., a web app) that uses this registered client to authenticate.
+2. **Redirect to Authorization Server**: The client redirects the user to the Authorization Server’s login page. This is the OAuth 2.0 **Authorization Code flow**.
+3. **User Logs In**: The user logs in with their credentials (e.g., username and password).
+4. **User Consents to Scopes**: The user is
+
+
 ## 009 Create JWK Source
 ## 010 Create JwtDecoder
 ## 011 Set Authorization Server Settings
