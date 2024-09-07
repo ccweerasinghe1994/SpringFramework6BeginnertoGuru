@@ -2736,4 +2736,159 @@ If all these checks pass, the token is considered valid, and the user is authent
 This method configures a **JwtDecoder** in an OAuth 2.0 Authorization Server or Resource Server, allowing it to decode, verify, and validate **JWT tokens**. The `JWKSource` provides the **public keys** needed to verify the signature of the tokens. This setup ensures that tokens issued by the Authorization Server can be verified by any system that has access to the **JWKSource**, enabling secure, token-based authentication in distributed systems.
 
 ## 011 Set Authorization Server Settings
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    @Bean
+    public AuthorizationServerSettings authorizationServerSettings() {
+        return AuthorizationServerSettings.builder().build();
+    }
+
+}
+
+```
+
+The `authorizationServerSettings()` method in this code creates a **Spring bean** that configures the settings for the **OAuth 2.0 Authorization Server**. This bean provides various configuration options that control the behavior of the authorization server, including the endpoints for handling OAuth 2.0 and OpenID Connect (OIDC) requests, the issuer URL, token settings, and more.
+
+Let's break down the code step by step and explain its purpose, providing examples to illustrate how it works.
+
+### Code Overview
+
+```java
+@Bean 
+public AuthorizationServerSettings authorizationServerSettings() {
+    return AuthorizationServerSettings.builder().build();
+}
+```
+
+This method creates an instance of `AuthorizationServerSettings`, which is a configuration class provided by Spring Security to set up the core behavior of the **OAuth 2.0 Authorization Server**. In this case, it uses the default settings by calling `.builder().build()`.
+
+---
+
+### What is `AuthorizationServerSettings`?
+
+**`AuthorizationServerSettings`** is a configuration class in Spring Security that allows you to customize the settings of your OAuth 2.0 Authorization Server. It helps you configure critical elements like the authorization endpoints, token endpoints, and other URLs that are used to manage OAuth 2.0 flows and OIDC interactions.
+
+Some of the settings that can be configured include:
+- **Authorization Endpoint**: The URL where clients direct users to authenticate and grant authorization.
+- **Token Endpoint**: The URL where the authorization server issues access tokens after clients authenticate or provide an authorization code.
+- **Issuer**: The URL representing the Authorization Server that issues tokens.
+- **JWK Set URL**: The endpoint that provides public keys for verifying JWT tokens.
+- **Token Revocation Endpoint**: The URL where clients can revoke tokens.
+
+By using the `AuthorizationServerSettings.builder()` method, you can customize each of these settings or simply use the defaults, as in the example provided.
+
+---
+
+### Breakdown of the Code
+
+#### 1. **`@Bean` Annotation**
+
+```java
+@Bean 
+```
+
+- **Spring Bean**: The `@Bean` annotation indicates that this method produces a **Spring bean** that will be managed by the Spring container. This bean will hold the configuration settings for the Authorization Server.
+- The bean is automatically injected wherever it’s needed in your Spring application. For example, Spring Security will use this bean to configure the OAuth 2.0 Authorization Server.
+
+#### 2. **`AuthorizationServerSettings.builder()`**
+
+```java
+return AuthorizationServerSettings.builder().build();
+```
+
+- **Builder Pattern**: The `AuthorizationServerSettings.builder()` method provides a builder for the `AuthorizationServerSettings` class. The **builder pattern** allows you to configure various properties of the authorization server in a flexible way.
+  
+- **`build()` Method**: Calling `build()` creates an instance of `AuthorizationServerSettings` with the configuration defined in the builder. In this case, no specific settings are customized, so the default settings are applied.
+
+#### 3. **What Happens When You Use Default Settings?**
+
+By using the default settings (as done in this example), the **Authorization Server** is automatically configured with the default endpoints for handling OAuth 2.0 requests, including:
+
+- **Authorization Endpoint**: `"/oauth2/authorize"`
+- **Token Endpoint**: `"/oauth2/token"`
+- **JWK Set Endpoint**: `"/oauth2/jwks"`
+- **Token Revocation Endpoint**: `"/oauth2/revoke"`
+
+These default endpoints allow the Authorization Server to function according to the OAuth 2.0 and OpenID Connect (OIDC) specifications.
+
+---
+
+### Real-World Example: OAuth 2.0 Authorization Server Setup
+
+#### 1. **Authorization Endpoint (`/oauth2/authorize`)**
+
+This is the endpoint where the user is redirected to authenticate and grant authorization. For example:
+- A client application (such as a web app) sends the user to `http://auth-server.com/oauth2/authorize` to log in.
+- Once the user logs in, they are asked to authorize the application to act on their behalf (e.g., to access their profile data).
+- If the user consents, the Authorization Server generates an **authorization code** that the client can exchange for an access token.
+
+#### 2. **Token Endpoint (`/oauth2/token`)**
+
+This is the endpoint where clients exchange the **authorization code** (or other grant types, such as client credentials) for an **access token**.
+- The client sends the authorization code (or credentials) to `http://auth-server.com/oauth2/token` along with its client ID and secret.
+- The Authorization Server verifies the request and issues an access token.
+
+#### 3. **JWK Set Endpoint (`/oauth2/jwks`)**
+
+This endpoint exposes the **public keys** that the Authorization Server uses to sign **JWT tokens**. Resource servers (like APIs) can use these public keys to verify the authenticity of the JWT tokens.
+- When a client uses a JWT token to access a protected resource, the resource server retrieves the public key from the **JWK Set Endpoint** to verify the token’s signature.
+
+#### 4. **Token Revocation Endpoint (`/oauth2/revoke`)**
+
+This is the endpoint where clients can revoke tokens that are no longer needed. For example, if a user logs out, the client can revoke the access token to prevent further use.
+- The client sends a request to `http://auth-server.com/oauth2/revoke` to invalidate the token, ensuring that it can no longer be used to access protected resources.
+
+---
+
+### Customizing the Authorization Server Settings
+
+If you wanted to customize these settings, you could modify the `AuthorizationServerSettings` like this:
+
+```java
+@Bean 
+public AuthorizationServerSettings authorizationServerSettings() {
+    return AuthorizationServerSettings.builder()
+            .issuer("http://auth-server.com")  // Set the issuer URL
+            .authorizationEndpoint("/custom-authorize")  // Customize authorization endpoint
+            .tokenEndpoint("/custom-token")  // Customize token endpoint
+            .jwkSetEndpoint("/custom-jwks")  // Customize JWK Set endpoint
+            .build();
+}
+```
+
+Here’s what’s happening:
+- **`issuer("http://auth-server.com")`**: The issuer URL defines the base URL of the Authorization Server. This is included in the **`iss`** claim of JWT tokens, allowing clients to identify where the token was issued from.
+- **`authorizationEndpoint("/custom-authorize")`**: You can customize the authorization endpoint (where the user logs in and grants authorization).
+- **`tokenEndpoint("/custom-token")`**: You can change the token endpoint URL.
+- **`jwkSetEndpoint("/custom-jwks")`**: Customize the endpoint where public keys are exposed.
+
+---
+
+### Example Use Case in an OAuth 2.0 Flow
+
+1. **User Authentication**:
+   - A client application (e.g., a mobile or web app) redirects the user to the Authorization Server’s authorization endpoint (`/oauth2/authorize` by default).
+   - The user logs in, and the Authorization Server generates an **authorization code**.
+
+2. **Access Token Request**:
+   - The client exchanges the authorization code for an **access token** by sending a request to the token endpoint (`/oauth2/token` by default).
+   - The Authorization Server verifies the request and issues the access token, which the client can use to access protected resources.
+
+3. **Verifying JWT Token**:
+   - The client sends the JWT token to a **Resource Server** to access a protected API.
+   - The Resource Server retrieves the public key from the Authorization Server’s **JWK Set Endpoint** (`/oauth2/jwks` by default) and verifies the JWT token’s signature.
+
+4. **Token Revocation**:
+   - If the client no longer needs the token (e.g., the user logs out), the client can revoke the token by sending a request to the revocation endpoint (`/oauth2/revoke` by default).
+
+---
+
+### Conclusion
+
+The `authorizationServerSettings()` method in this code creates a bean that configures the core settings for the **OAuth 2.0 Authorization Server**. It defines the URLs for key OAuth 2.0 and OIDC operations, such as token issuance, authorization, and key management. By default, the `AuthorizationServerSettings.builder().build()` method configures the server with default endpoints, but you can customize these settings as needed.
+
+This setup is critical for enabling OAuth 2.0 flows like **Authorization Code** and **Client Credentials**, and for managing secure communication between clients, resource servers, and the Authorization Server.
 ## 012 Get Authorization Token Using Postman
