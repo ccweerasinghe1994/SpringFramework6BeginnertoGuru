@@ -2891,6 +2891,262 @@ Here’s what’s happening:
 The `authorizationServerSettings()` method in this code creates a bean that configures the core settings for the **OAuth 2.0 Authorization Server**. It defines the URLs for key OAuth 2.0 and OIDC operations, such as token issuance, authorization, and key management. By default, the `AuthorizationServerSettings.builder().build()` method configures the server with default endpoints, but you can customize these settings as needed.
 
 This setup is critical for enabling OAuth 2.0 flows like **Authorization Code** and **Client Credentials**, and for managing secure communication between clients, resource servers, and the Authorization Server.
+
+
+```java
+public final class AuthorizationServerSettings extends AbstractSettings {
+
+	...
+
+	public static Builder builder() {
+		return new Builder()
+			.authorizationEndpoint("/oauth2/authorize")
+			.deviceAuthorizationEndpoint("/oauth2/device_authorization")
+			.deviceVerificationEndpoint("/oauth2/device_verification")
+			.tokenEndpoint("/oauth2/token")
+			.tokenIntrospectionEndpoint("/oauth2/introspect")
+			.tokenRevocationEndpoint("/oauth2/revoke")
+			.jwkSetEndpoint("/oauth2/jwks")
+			.oidcLogoutEndpoint("/connect/logout")
+			.oidcUserInfoEndpoint("/userinfo")
+			.oidcClientRegistrationEndpoint("/connect/register");
+	}
+
+	...
+
+}
+```
+
+The `AuthorizationServerSettings` class, which extends the `AbstractSettings`, defines the **endpoints** used by an **OAuth 2.0 Authorization Server**. These settings specify where client applications (such as web or mobile apps) should send requests for authentication, authorization, token issuance, and other OAuth-related tasks. 
+
+In this class, the **builder pattern** is used to configure and customize the behavior of the Authorization Server by defining various key endpoints, including those for authorization, token management, device authorization, and OpenID Connect (OIDC) endpoints.
+
+Let’s break down each endpoint with detailed explanations and examples of their usage in real-world OAuth 2.0 flows.
+
+### Key Endpoints Defined in `AuthorizationServerSettings`
+
+1. **Authorization Endpoint (`/oauth2/authorize`)**
+
+   **Definition**:
+   ```java
+   authorizationEndpoint("/oauth2/authorize")
+   ```
+
+   - This is the **authorization endpoint**, where clients (such as a web app) direct users to authenticate and provide authorization to access resources on their behalf. In the **Authorization Code flow**, users are redirected to this endpoint to log in and consent to granting the client access to their resources.
+
+   **Example**:
+   - A web app wants to access a user's profile data from an API. The user is redirected to:
+     ```
+     http://auth-server.com/oauth2/authorize?client_id=client123&response_type=code&scope=profile&redirect_uri=http://webapp.com/callback
+     ```
+
+   - The user logs in, consents to allow the web app access, and the server issues an **authorization code** to the app via the redirect URI.
+
+2. **Device Authorization Endpoint (`/oauth2/device_authorization`)**
+
+   **Definition**:
+   ```java
+   deviceAuthorizationEndpoint("/oauth2/device_authorization")
+   ```
+
+   - This is the **device authorization endpoint**, where device-based applications (such as smart TVs or IoT devices) request authorization. Since such devices may not have full input capabilities, users are directed to another device (like a phone or computer) to grant access.
+
+   **Example**:
+   - A user opens a streaming app on their smart TV, and the TV displays a code. The user is instructed to visit:
+     ```
+     http://auth-server.com/oauth2/device_authorization
+     ```
+
+   - The user enters the code on their phone or computer to authorize the TV to access their account.
+
+3. **Device Verification Endpoint (`/oauth2/device_verification`)**
+
+   **Definition**:
+   ```java
+   deviceVerificationEndpoint("/oauth2/device_verification")
+   ```
+
+   - This is the endpoint where users enter a code to verify and authorize device-based applications (such as smart TVs or IoT devices).
+
+   **Example**:
+   - Continuing from the previous example, the user enters the code displayed on the TV at the verification URL:
+     ```
+     http://auth-server.com/oauth2/device_verification?user_code=XYZ123
+     ```
+
+   - After successful verification, the Authorization Server grants access to the TV.
+
+4. **Token Endpoint (`/oauth2/token`)**
+
+   **Definition**:
+   ```java
+   tokenEndpoint("/oauth2/token")
+   ```
+
+   - This is the **token endpoint**, where client applications exchange an **authorization code**, client credentials, or other grant types (e.g., refresh tokens) for an **access token**. This endpoint is also used in the **Client Credentials flow**.
+
+   **Example**:
+   - A web app exchanges an authorization code for an access token by sending a POST request to:
+     ```
+     POST http://auth-server.com/oauth2/token
+     Content-Type: application/x-www-form-urlencoded
+     grant_type=authorization_code&code=abc123&client_id=client123&client_secret=secret&redirect_uri=http://webapp.com/callback
+     ```
+
+   - The Authorization Server responds with an access token that the app can use to access protected resources.
+
+5. **Token Introspection Endpoint (`/oauth2/introspect`)**
+
+   **Definition**:
+   ```java
+   tokenIntrospectionEndpoint("/oauth2/introspect")
+   ```
+
+   - This endpoint allows **resource servers** to check the validity of an access token. It returns information about the token, such as whether it is active, its scopes, and its expiration time.
+
+   **Example**:
+   - A Resource Server (such as an API) receives an access token from a client and wants to verify if it’s valid. It sends a request to:
+     ```
+     POST http://auth-server.com/oauth2/introspect
+     Content-Type: application/x-www-form-urlencoded
+     token=xyz123
+     ```
+
+   - The Authorization Server responds with details about the token, such as whether it is active and the scopes granted to it:
+     ```json
+     {
+       "active": true,
+       "scope": "profile email",
+       "exp": 1617715999,
+       "client_id": "client123",
+       "username": "user123"
+     }
+     ```
+
+6. **Token Revocation Endpoint (`/oauth2/revoke`)**
+
+   **Definition**:
+   ```java
+   tokenRevocationEndpoint("/oauth2/revoke")
+   ```
+
+   - This endpoint allows clients to **revoke tokens** (both access and refresh tokens). Revoking a token ensures that it can no longer be used to access protected resources.
+
+   **Example**:
+   - A mobile app logs out the user and sends a request to revoke the token:
+     ```
+     POST http://auth-server.com/oauth2/revoke
+     Content-Type: application/x-www-form-urlencoded
+     token=xyz123&client_id=client123&client_secret=secret
+     ```
+
+   - The Authorization Server revokes the token, preventing further use.
+
+7. **JWK Set Endpoint (`/oauth2/jwks`)**
+
+   **Definition**:
+   ```java
+   jwkSetEndpoint("/oauth2/jwks")
+   ```
+
+   - This is the **JSON Web Key Set (JWKS) endpoint**, where the Authorization Server publishes its **public keys**. Resource Servers use these public keys to verify the signatures of JWT tokens issued by the Authorization Server.
+
+   **Example**:
+   - A Resource Server that receives a JWT token from a client fetches the public key to verify the token’s signature:
+     ```
+     GET http://auth-server.com/oauth2/jwks
+     ```
+
+   - The response contains the public keys in JSON Web Key (JWK) format:
+     ```json
+     {
+       "keys": [
+         {
+           "kid": "1234",
+           "kty": "RSA",
+           "alg": "RS256",
+           "n": "abc123...",
+           "e": "AQAB"
+         }
+       ]
+     }
+     ```
+
+8. **OIDC Logout Endpoint (`/connect/logout`)**
+
+   **Definition**:
+   ```java
+   oidcLogoutEndpoint("/connect/logout")
+   ```
+
+   - This is the **OpenID Connect (OIDC) logout endpoint**, where users can log out of their session with the Authorization Server. After logging out, they are redirected back to the client application.
+
+   **Example**:
+   - A user logs out of their account, and the client sends a logout request:
+     ```
+     GET http://auth-server.com/connect/logout?id_token_hint=abc123&post_logout_redirect_uri=http://webapp.com
+     ```
+
+   - The Authorization Server logs the user out and redirects them back to the client’s logout confirmation page.
+
+9. **OIDC User Info Endpoint (`/userinfo`)**
+
+   **Definition**:
+   ```java
+   oidcUserInfoEndpoint("/userinfo")
+   ```
+
+   - This endpoint provides information about the user (such as profile and email) as part of the **OpenID Connect (OIDC)** flow. After the client obtains an ID token, it can retrieve additional user details by querying this endpoint.
+
+   **Example**:
+   - A client requests the user’s profile data:
+     ```
+     GET http://auth-server.com/userinfo
+     Authorization: Bearer xyz123
+     ```
+
+   - The Authorization Server responds with user information:
+     ```json
+     {
+       "sub": "user123",
+       "name": "John Doe",
+       "email": "john@example.com"
+     }
+     ```
+
+10. **OIDC Client Registration Endpoint (`/connect/register`)**
+
+    **Definition**:
+    ```java
+    oidcClientRegistrationEndpoint("/connect/register")
+    ```
+
+    - This endpoint is used to **dynamically register clients** with the Authorization Server. Clients can register themselves and provide information like the redirect URI and client ID.
+
+    **Example**:
+    - A client application dynamically registers itself with the Authorization Server:
+      ```
+      POST http://auth-server.com/connect/register
+      Content-Type: application/json
+      {
+        "client_name": "New Client",
+        "redirect_uris": ["http://webapp.com/callback"]
+      }
+      ```
+
+    - The Authorization Server registers the client and provides details such as the client ID and secret.
+
+---
+
+### How These Endpoints Work Together in OAuth 2.0 and OIDC
+
+When an application needs to authenticate users or request access to resources, it interacts with the **Authorization Server** using the endpoints defined above. These endpoints ensure that OAuth 2.0 and OpenID Connect (OIDC) flows, such as **Authorization Code Flow**, **Client Credentials Flow**, and **Device Authorization Flow**, work smoothly.
+
+### Example: OAuth 2.0 Authorization Code Flow
+
+1. **Authorization Request**: The client redirects the user to the **authorization endpoint** (`/oauth2/authorize`) to log in and authorize access.
+2. **Token Request**: The client exchanges the authorization code for an access token at the **
+
 ## 012 Get Authorization Token Using Postman
 
 This string is a **JSON Web Token (JWT)**, which is a compact, URL-safe token format used in **OAuth 2.0** and **OpenID Connect** for secure transmission of information between parties. JWTs consist of three parts:
