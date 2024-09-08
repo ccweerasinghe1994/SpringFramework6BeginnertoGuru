@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -62,7 +63,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         get(BeerController.BEER_PATH_ID, beerDTO.getId())
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -87,7 +95,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         get(BeerController.BEER_PATH_ID, UUID.randomUUID())
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isNotFound());
@@ -101,7 +116,14 @@ class BeerControllerTest {
         mockMvc.perform(
                         get(
                                 BeerController.BEER_PATH)
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -126,7 +148,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         post(BeerController.BEER_PATH)
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerDTO))
@@ -145,7 +174,14 @@ class BeerControllerTest {
 
         ResultActions resultActions = mockMvc.perform(
                         post(BeerController.BEER_PATH)
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerDTO))
@@ -164,7 +200,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         put(BeerController.BEER_PATH_ID, beerDTO.getId())
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerDTO))
@@ -180,7 +223,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         delete(BeerController.BEER_PATH_ID, beerDTO.getId())
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                 )
                 .andExpect(status().isNoContent());
 
@@ -199,7 +249,14 @@ class BeerControllerTest {
 
         mockMvc.perform(
                         patch(BeerController.BEER_PATH_ID, beerDTO.getId())
-                                .with(httpBasic(USER_NAME, PASSWORD))
+                                .with(jwt().jwt(jwt -> {
+                                            jwt.claims(claims -> {
+                                                        claims.put("scope", "message:read");
+                                                        claims.put("scope", "message:write");
+                                                    }).subject("messaging-client")
+                                                    .notBefore(Instant.now().minusSeconds(5l));
+                                        }
+                                ))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerMap))
