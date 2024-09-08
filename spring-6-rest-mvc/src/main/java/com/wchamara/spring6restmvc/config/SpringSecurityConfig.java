@@ -11,12 +11,10 @@ public class SpringSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Use lambda-style configuration for authorizeHttpRequests
         http.authorizeHttpRequests(auth -> {
                     auth.anyRequest().authenticated();
                 })
-                .httpBasic(Customizer.withDefaults())  // Default basic HTTP authentication
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));  // Disable CSRF for API routes
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
     }

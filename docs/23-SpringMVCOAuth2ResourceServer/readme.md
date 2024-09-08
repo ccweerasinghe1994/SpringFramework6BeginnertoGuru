@@ -216,6 +216,197 @@ Here’s how you might build a simple Resource Server using the `spring-boot-sta
 The `spring-boot-starter-oauth2-resource-server` dependency provides the necessary tools to transform a Spring Boot application into an **OAuth 2.0 Resource Server**. The Resource Server is responsible for verifying access tokens, typically JWT tokens, and ensuring that only authenticated and authorized clients can access protected resources. This setup is commonly used in modern microservice architectures, where services communicate using OAuth 2.0 tokens to protect APIs and sensitive data.
 ## 003 Spring Security Configuration
 
+```java
+package com.wchamara.spring6restmvc.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SpringSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> {
+                    auth.anyRequest().authenticated();
+                })
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+}
+
+```
+This `SpringSecurityConfig` class defines a **security filter chain** using Spring Security in a **Spring Boot** application. The configuration sets up the application as an **OAuth 2.0 Resource Server** and ensures that all incoming HTTP requests must be authenticated using **JWT (JSON Web Token)** tokens.
+
+Let’s break down the key elements of this configuration step by step, and provide practical examples.
+
+---
+
+### Overview of Key Concepts
+
+1. **SecurityFilterChain**: This defines the security filter logic for handling HTTP requests. It determines which requests need to be authenticated and how they are handled.
+  
+2. **OAuth 2.0 Resource Server**: The application is configured as a Resource Server that validates JWT tokens received from client applications. The Resource Server protects APIs and ensures that only clients with valid tokens can access them.
+
+3. **JWT (JSON Web Token)**: This is a token format used to securely transmit information between parties, typically between the Authorization Server and the Resource Server. The JWT contains claims (such as user information and permissions) and is signed by the Authorization Server.
+
+---
+
+### Code Breakdown
+
+```java
+@Configuration
+public class SpringSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> {
+                    auth.anyRequest().authenticated();
+                })
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+}
+```
+
+#### 1. **SecurityFilterChain Bean**
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+```
+
+- **`SecurityFilterChain`**: This bean configures Spring Security to apply specific security rules to HTTP requests.
+- The **`HttpSecurity`** object allows you to configure the security policies for handling HTTP requests, such as requiring authentication for certain requests or allowing others to be accessed without credentials.
+
+#### 2. **Authorizing HTTP Requests**
+
+```java
+http.authorizeHttpRequests(auth -> {
+    auth.anyRequest().authenticated();
+})
+```
+
+- **`authorizeHttpRequests()`**: This method allows you to define security policies for different HTTP endpoints. In this case:
+  - **`anyRequest().authenticated()`**: This means **every request** to the application must be authenticated. No endpoint is open to public access. Any HTTP request must include valid credentials (in the form of a JWT token) to be processed.
+
+##### Example Scenario:
+
+If you had an API endpoint such as `/api/messages`, this rule ensures that no client can access it unless they provide a valid JWT token in their request.
+
+**Example:**
+```http
+GET /api/messages
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5c...
+```
+
+If the client doesn't provide a valid token, the server responds with:
+```http
+HTTP/1.1 401 Unauthorized
+```
+
+#### 3. **Configuring the OAuth 2.0 Resource Server**
+
+```java
+.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+```
+
+- **`oauth2ResourceServer()`**: This configures the application to act as an **OAuth 2.0 Resource Server**.
+- **`.jwt(Customizer.withDefaults())`**: This tells Spring Security that the Resource Server will use **JWT tokens** for authentication. The **defaults** configuration enables Spring to handle JWT validation, signature checking, and claims verification automatically.
+
+When a client application sends a request to the Resource Server, Spring Security will:
+1. **Extract the JWT**: It reads the `Authorization` header to retrieve the token.
+2. **Validate the JWT**: It validates the signature of the JWT using the **public key** from the **Authorization Server**. If the signature is valid, it proceeds to check the token's claims (such as expiration, issuer, and audience).
+3. **Verify Claims**: If the claims (such as expiration time and audience) are valid, the request is considered authenticated.
+
+##### Example of JWT Validation:
+
+- **Client Request**: The client application sends the JWT as part of the HTTP request:
+  
+  ```http
+  GET /api/messages
+  Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+  ```
+
+- **JWT Token**: The JWT looks something like this:
+  ```plaintext
+  eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwic2NvcGUiOiJyZWFkOm1lc3NhZ2VzIiwiZXhwIjoxNjY0NDU0NjAwfQ.VjB5SOXsT0spO25AL...
+  ```
+
+  The JWT contains:
+  - **Header**: Metadata about the token (e.g., signing algorithm, key ID).
+  - **Payload**: Claims such as the user identifier (`sub`), token expiration time (`exp`), and the scopes granted to the token.
+  - **Signature**: This ensures the token has not been tampered with. It is signed with the private key of the **Authorization Server**.
+
+- **Resource Server Behavior**:
+  1. The Resource Server extracts the JWT from the request.
+  2. It verifies the signature of the token using the public key provided by the Authorization Server.
+  3. It checks the claims, such as whether the token has expired (`exp`) and whether the token allows access to the resource (based on the `scope`).
+  4. If all checks pass, the Resource Server processes the request and returns the requested resource.
+
+---
+
+### Full Example in a Real-World Scenario
+
+#### Step 1: Client Requests Access Token
+
+1. A client application (e.g., a web app) requests an **access token** from the **Authorization Server**.
+2. The Authorization Server authenticates the user and issues a **JWT access token**.
+
+#### Step 2: Client Makes an API Request with the JWT Token
+
+The client application then makes an API request to the **Resource Server** (your Spring Boot app) with the JWT in the `Authorization` header.
+
+**Example Request**:
+```http
+GET /api/messages
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+#### Step 3: Resource Server Validates the Token
+
+The Resource Server (your Spring Boot application):
+1. Extracts the JWT from the `Authorization` header.
+2. Validates the token’s signature using the **public key** from the Authorization Server.
+3. Checks the claims in the token (e.g., expiration time, audience, and scope).
+4. If the token is valid and the user has the appropriate permissions (scopes), the server allows access to the requested API endpoint.
+
+If valid, the server returns the protected resource, for example:
+
+**Example Response**:
+```json
+{
+  "messages": [
+    "Message 1",
+    "Message 2"
+  ]
+}
+```
+
+#### Step 4: Invalid Token Handling
+
+If the JWT is invalid (e.g., expired, tampered with, or missing required claims), the Resource Server will deny access and return a **401 Unauthorized** error.
+
+**Example Error Response**:
+```json
+{
+  "error": "unauthorized",
+  "error_description": "Full authentication is required to access this resource"
+}
+```
+
+---
+
+### Conclusion
+
+This `SpringSecurityConfig` class configures your Spring Boot application as a **Resource Server** in an OAuth 2.0 system. By adding the **JWT validation** setup, all incoming HTTP requests to the application will require authentication using a JWT access token. Spring Security will handle the token validation, including verifying the signature and checking the token's claims, ensuring that only authorized clients can access protected resources.
+
+This setup is a standard approach for securing APIs in microservices architectures where the Resource Server relies on external **Authorization Servers** to issue and validate access tokens.
 ## 004 Testing with Postman
 
 ## 005 Spring MockMVC Testing with JWT
