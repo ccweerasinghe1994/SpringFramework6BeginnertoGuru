@@ -1038,4 +1038,121 @@ This test verifies the behavior of the `BeerController` when handling a request 
 3. **Validating the response**: Ensuring the response from the controller is as expected, including the correct JSON structure and HTTP status.
 
 This approach is typical for testing REST controllers in Spring applications where JWT authentication and service layer logic are involved.
+
+This block of code is used to **simulate a JWT-authenticated request** in a unit test using **Spring Security Test** utilities. It mimics an OAuth 2.0 authenticated request by attaching a **JWT (JSON Web Token)** to the mock HTTP request. Here's a step-by-step breakdown of each part of this code and its purpose, along with an example of how it works in real-world scenarios.
+
+---
+
+### **Code Breakdown and Purpose**
+
+```java
+.with(jwt().jwt(jwt -> {
+            jwt.claims(claims -> {
+                claims.put("scope", "message:read");
+                claims.put("scope", "message:write");
+            }).subject("messaging-client")
+            .notBefore(Instant.now().minusSeconds(5l));
+        }))
+```
+
+This is a **JWT authentication setup** in a **MockMvc** test. It simulates an HTTP request where the client includes a JWT in the `Authorization` header. The JWT contains **claims**, such as the subject (representing the client) and scopes (defining the permissions). Let’s break down each section:
+
+---
+
+#### 1. **`.with(jwt())`**
+
+This part attaches a **JWT** to the simulated HTTP request. The **`jwt()`** method is part of Spring Security's **SecurityMockMvcRequestPostProcessors** API, which provides a way to add security-related information to a mock request.
+
+- **Purpose**: The `jwt()` method creates a JWT for the mock request, allowing you to simulate a JWT-based authentication flow in your tests. This JWT will be included in the `Authorization: Bearer` header of the request.
+
+**Example**:
+```java
+mockMvc.perform(
+    get("/api/messages")
+        .with(jwt()) // Attaches a JWT token to the request
+);
+```
+
+---
+
+#### 2. **`.jwt(jwt -> { ... })`**
+
+This part customizes the contents of the JWT token. It allows you to set specific claims, such as the token's subject (i.e., who the token represents) and any custom claims like `scope`.
+
+- **Purpose**: This is where you define the structure of the JWT, including its claims (the information embedded within the token), such as the user's identity (subject), permissions (scopes), and other properties like token validation time.
+
+---
+
+#### 3. **`.claims(claims -> { claims.put("scope", "message:read"); claims.put("scope", "message:write"); })`**
+
+The `.claims()` method sets the **claims** for the JWT token. Claims are key-value pairs that provide information about the token, such as what the client is allowed to do (scopes), who the client is (subject), when the token was issued, and its expiration.
+
+- **`claims.put("scope", "message:read")`**: This line adds a **`scope`** claim to the JWT. The scope defines what actions the client is authorized to perform. In this case, the client is granted the **`message:read`** permission.
+- **`claims.put("scope", "message:write")`**: Another scope is added, allowing the client to perform **`message:write`** operations.
+
+**Purpose**: By adding these scope claims, you simulate a client that has specific permissions. In this case, the client is authorized to both read and write messages, which would be validated by the API before granting access to specific endpoints.
+
+**Example in OAuth 2.0**:
+In a real-world OAuth 2.0 system, the `scope` claim is often used to define what resources or actions a client is allowed to access. For example:
+- **`read:messages`**: Allows the client to read messages.
+- **`write:messages`**: Allows the client to create or modify messages.
+
+In this test case, the client is granted the ability to both read and write messages, simulating a typical authorization scenario.
+
+---
+
+#### 4. **`.subject("messaging-client")`**
+
+The **`subject`** is another claim in the JWT token that represents the identity of the client or user. In OAuth 2.0, the **`sub`** (subject) claim is used to identify the principal (i.e., the user or client) that the token is issued for.
+
+- **`subject("messaging-client")`**: This means that the token is being issued for a client identified as `"messaging-client"`. This could represent an application or service interacting with the API.
+
+**Purpose**: By setting the `subject` claim, you simulate an authenticated client that is known to the system. The controller or API can later use this information to identify the client making the request.
+
+**Example in OAuth 2.0**:
+In real-world applications, the `sub` claim would be something like:
+- **User subject**: `"user123"` — representing a user.
+- **Client subject**: `"messaging-client"` — representing a machine-to-machine client application.
+  
+The `subject` helps distinguish between different users or applications when they access the API.
+
+---
+
+#### 5. **`.notBefore(Instant.now().minusSeconds(5l))`**
+
+The **`notBefore`** claim (often abbreviated as `nbf`) defines the earliest time when the token is considered valid. In this case, the token is valid starting from 5 seconds before the current time.
+
+- **`Instant.now().minusSeconds(5l)`**: This sets the **`notBefore`** claim to 5 seconds before the current time. This ensures that there are no issues related to timing skew, especially in cases where the test might fail because the token is technically issued slightly "in the future."
+
+**Purpose**: Setting a `notBefore` time ensures that the token is not used before its intended activation time. This helps avoid issues where a token is issued but isn't valid for immediate use, which might be a security concern in some systems.
+
+**Example in Real Use**:
+In OAuth 2.0, the `nbf` claim is used to prevent a token from being used before it is supposed to be active. For instance, a token might have a delay before becoming active, allowing the system to enforce a more secure time window.
+
+---
+
+### **Practical Example Scenario**
+
+Let’s consider a real-world scenario where an API only allows clients with specific permissions to perform certain actions, such as reading or writing messages.
+
+#### Example: A Messaging API
+
+1. **Authorization Server** issues a **JWT token** to the `messaging-client` that contains two scopes: `message:read` and `message:write`.
+2. The `messaging-client` makes a request to the **Message Service API** to retrieve a list of messages.
+3. The **Resource Server** (the Spring Boot app with Spring Security configured as a Resource Server) checks the **JWT token**:
+   - Verifies the **signature** using the public key.
+   - Checks the **scopes** (`message:read`, `message:write`) to see if the client is allowed to read or write messages.
+   - Checks the **subject** (`messaging-client`) to identify the client.
+   - Validates the **notBefore** time to ensure the token is valid for use at the time of the request.
+
+4. If the token is valid and contains the necessary scopes, the server allows the `messaging-client` to access the API endpoint and retrieve the messages.
+
+---
+
+### **Conclusion**
+
+This code block is a part of a unit test that simulates an HTTP request to a Spring MVC controller secured with JWT-based authentication. It simulates a JWT token with custom claims (such as `scope` and `subject`) to authenticate the client. The use of `.with(jwt())` allows the test to mock a JWT token and simulate a real-world scenario where clients authenticate with a JWT to gain access to specific API endpoints.
+
+This approach is useful for testing **JWT-secured REST APIs**, ensuring that the controller behaves correctly when a valid or invalid JWT token is presented. It allows developers to test authorization logic, such as scope-based access control, in an isolated test environment.
+
 ## 006 Refactor JWT Tests

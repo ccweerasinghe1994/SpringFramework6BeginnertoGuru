@@ -23,10 +23,10 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.wchamara.spring6restmvc.controller.BeerControllerTest.JWT_REQUEST_POST_PROCESSOR;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -60,7 +60,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
-                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .with(JWT_REQUEST_POST_PROCESSOR)
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "TRUE")
@@ -78,7 +78,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
-                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .with(JWT_REQUEST_POST_PROCESSOR)
                                 .queryParam("beerName", "IPA")
                 )
                 .andExpect(status().isOk())
@@ -96,7 +96,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
-                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .with(JWT_REQUEST_POST_PROCESSOR)
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "TRUE")
@@ -114,7 +114,7 @@ class BeerControllerIT {
 //        let's check the size of the list
         mockMvc.perform(
                         get(BeerController.BEER_PATH)
-                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .with(JWT_REQUEST_POST_PROCESSOR)
                                 .queryParam("beerName", "IPA")
                                 .queryParam("beerStyle", BeerStyle.IPA.name())
                                 .queryParam("showInventory", "FALSE")
@@ -229,7 +229,7 @@ class BeerControllerIT {
 
         MvcResult mvcResult = mockMvc.perform(
                         patch(BeerController.BEER_PATH_ID, beer.getId())
-                                .with(httpBasic(BeerControllerTest.USER_NAME, BeerControllerTest.PASSWORD))
+                                .with(JWT_REQUEST_POST_PROCESSOR)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(beerMap))
